@@ -124,7 +124,5 @@
 
         <menuitem id="menu_eps_base" name="EPS" parent="planilla.menu_planilla_seccion_contabilidad" action="action_eps_base"/>
 
-        <!-- <menuitem id="menu_eps_line" name="EPS Line" parent="planilla.menu_planilla_seccion_contabilidad" action="action_eps_line"/> -->
-
     </data>
 </odoo>

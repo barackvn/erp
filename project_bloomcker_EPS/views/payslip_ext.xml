@@ -12,5 +12,16 @@
                 </xpath>
             </field>
         </record>
+
+        <record id="paysliprun_view_form_ext" model="ir.ui.view">
+            <field name="name">paysliprun.view.form.ext</field>
+            <field name="model">hr.payslip.run</field>
+            <field name="inherit_id" ref="hr_payroll.hr_payslip_run_form"/>
+            <field name="arch" type="xml">
+                <xpath expr="//field[@name='asiento_contable_id']" position="after">
+                    <field name="eps_check" string="Tomar EPS"/>
+                </xpath>
+            </field>
+        </record>
     </data>
 </odoo>
