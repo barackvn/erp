@@ -12,7 +12,11 @@ class VacationsBL(models.Model):
     employee_id = fields.Many2one('hr.employee','Apellidos y Nombres')
     state = fields.Selection([ ('active', 'Activo'), ('inactive', 'Inactivo')], string='Estado')
     line_ids = fields.One2many('vacations.line.bl', 'vacations_base_id', string='Lineas de Vacaciones', ondelete='cascade')
+    breack_ids = fields.One2many('breack.line.bl', 'vacations_base_id', string='Lineas de Descansos', ondelete='cascade')
+    days_devs = fields.Integer('Días Devengados', compute="_get_days")
     days_totals = fields.Integer('Días Totales', compute="_get_days")
+    days = fields.Integer('Días por Devengar', compute="_get_days")
+    date_init = fields.Date('Fecha de Ingreso', related="employee_id.contract_id.date_start")
 
     @api.model
     def create(self, vals):
@@ -25,7 +29,12 @@ class VacationsBL(models.Model):
     def _get_days(self):
         for i in self:
             for line in i.line_ids:
-                i.days_totals += line.days_total
+                i.days_devs += line.days_total
+
+            calculo = fields.Datetime.from_string(str(i.employee_id.contract_id.date_start)) - datetime.now()
+            i.days_totals = int(-calculo.days // 360)*30
+            i.days = i.days_totals - i.days_devs
+
 
     def _get_dni(self):
         for i in self:
@@ -66,6 +75,20 @@ class VacationsLine(models.Model):
     date_start = fields.Date("Fecha de Inicio")
     date_end = fields.Date("Fecha de Fin")
     days_total = fields.Integer('Días')
+    period = fields.Many2one('hr.payslip.run', string="Periodo")
+    vacations_base_id = fields.Many2one('vacations.bl')
+    employee_id = fields.Many2one('hr.employee','Apellidos y Nombres', related='vacations_base_id.employee_id', readonly=True)
+
+class BreackLine(models.Model):
+
+    _name = 'breack.line.bl'
+
+    date_start = fields.Date("Fecha de Inicio")
+    date_end = fields.Date("Fecha de Fin")
+    days_total = fields.Integer('Días')
+    dsndes = fields.Char('DSNDes')
+    amount = fields.Float('Monto Subsidio')
+    type_poised = fields.Selection([ ('inability', 'Incapacidad'), ('other', 'Otros')], string='Tipo de Suspensión')
     period = fields.Many2one('hr.payslip.run', string="Periodo")
     vacations_base_id = fields.Many2one('vacations.bl')
     employee_id = fields.Many2one('hr.employee','Apellidos y Nombres', related='vacations_base_id.employee_id', readonly=True)
