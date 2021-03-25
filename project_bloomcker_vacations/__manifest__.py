@@ -11,6 +11,7 @@
     "data": [
         'views/vacations_bl_view.xml',
         'views/hr_nomina_ext.xml',
+        'views/break_bl_view.xml',
         'security/ir.model.access.csv',
     ],
     "application": True,

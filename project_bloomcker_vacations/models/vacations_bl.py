@@ -12,7 +12,7 @@ class VacationsBL(models.Model):
     employee_id = fields.Many2one('hr.employee','Apellidos y Nombres')
     state = fields.Selection([ ('active', 'Activo'), ('inactive', 'Inactivo')], string='Estado')
     line_ids = fields.One2many('vacations.line.bl', 'vacations_base_id', string='Lineas de Vacaciones', ondelete='cascade')
-    breack_ids = fields.One2many('breack.line.bl', 'vacations_base_id', string='Lineas de Descansos', ondelete='cascade')
+    # breack_ids = fields.One2many('breack.line.bl', 'vacations_base_id', string='Lineas de Descansos', ondelete='cascade')
     days_devs = fields.Integer('Días Devengados', compute="_get_days")
     days_totals = fields.Integer('Días Totales', compute="_get_days")
     days = fields.Integer('Días por Devengar', compute="_get_days")
@@ -68,6 +68,25 @@ class VacationsBL(models.Model):
             }
             line = self.env['vacations.line.bl'].create(vals)
 
+    def put_lines(self):
+        devengues = self.env['hr.devengue'].search([('employee_id', '=', self.employee_id.id)])
+        devengues.unlink()
+        for devengue in self.line_ids:
+
+            slip = self.env['hr.payslip'].search([('employee_id', '=', devengue.employee_id.id), ('payslip_run_id', '=', devengue.period.id)], limit=1)
+            if not slip:
+                raise UserError(('Alguna de las lineas no es valida por no tener un nomina en el periodo indicado\n Debe Procesar Las Nominas.'))
+
+            vals = {
+                'date_end':devengue.date_end,
+                'date_start':devengue.date_start,
+                'dias':devengue.days_total,
+                'employee_id':devengue.employee_id.id,
+                'periodo_devengue':devengue.period.id,
+                'slip_id':slip.id,
+            }
+            line = self.env['hr.devengue'].create(vals)
+
 class VacationsLine(models.Model):
 
     _name = 'vacations.line.bl'
@@ -78,20 +97,20 @@ class VacationsLine(models.Model):
     period = fields.Many2one('hr.payslip.run', string="Periodo")
     vacations_base_id = fields.Many2one('vacations.bl')
     employee_id = fields.Many2one('hr.employee','Apellidos y Nombres', related='vacations_base_id.employee_id', readonly=True)
-
-class BreackLine(models.Model):
-
-    _name = 'breack.line.bl'
-
-    date_start = fields.Date("Fecha de Inicio")
-    date_end = fields.Date("Fecha de Fin")
-    days_total = fields.Integer('Días')
-    dsndes = fields.Char('DSNDes')
-    amount = fields.Float('Monto Subsidio')
-    type_poised = fields.Selection([ ('inability', 'Incapacidad'), ('other', 'Otros')], string='Tipo de Suspensión')
-    period = fields.Many2one('hr.payslip.run', string="Periodo")
-    vacations_base_id = fields.Many2one('vacations.bl')
-    employee_id = fields.Many2one('hr.employee','Apellidos y Nombres', related='vacations_base_id.employee_id', readonly=True)
+#
+# class BreackLine(models.Model):
+#
+#     _name = 'breack.line.bl'
+#
+#     date_start = fields.Date("Fecha de Inicio")
+#     date_end = fields.Date("Fecha de Fin")
+#     days_total = fields.Integer('Días')
+#     dsndes = fields.Char('DSNDes')
+#     amount = fields.Float('Monto Subsidio')
+#     type_poised = fields.Selection([ ('inability', 'Incapacidad'), ('other', 'Otros')], string='Tipo de Suspensión')
+#     period = fields.Many2one('hr.payslip.run', string="Periodo")
+#     vacations_base_id = fields.Many2one('vacations.bl')
+#     employee_id = fields.Many2one('hr.employee','Apellidos y Nombres', related='vacations_base_id.employee_id', readonly=True)
 
 
 
