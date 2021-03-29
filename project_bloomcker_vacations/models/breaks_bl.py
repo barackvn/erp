@@ -25,4 +25,16 @@ class breaksLines(models.Model):
     period = fields.Many2one('hr.payslip.run', string="Periodo")
     breaks_base_id = fields.Many2one('breaks.bl')
     employee_id = fields.Many2one('hr.employee','Apellidos y Nombres', related='breaks_base_id.employee_id', readonly=True)
-    amount = fields.Float('Monto')
+    amount = fields.Float('Monto', compute='_get_amount')
+
+    def _get_amount(self):
+        for j in self:
+            contracts = j.env['hr.contract'].search([('employee_id', '=', j.employee_id.id)], limit=6)
+            amount_total = 0
+            for i in contracts:
+                amount_total += i.wage
+
+            if amount_total:
+                amount_total = ((amount_total/len(contracts))/30)*j.days_total
+
+            j.amount = amount_total

@@ -7,7 +7,7 @@
             <field name="arch" type="xml">
                 <xpath expr="//form/sheet/notebook/page[5]" position="replace">
                     <page string="Devengue Vacaciones">
-                        <field name="periodos_devengue">
+                        <field name="periodos_devengue" readonly="1">
                             <tree editable="bottom">
                                 <field name="periodo_devengue" required="1"/>
                                 <field name="date_start" required="1"/>
