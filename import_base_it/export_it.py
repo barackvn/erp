@@ -20,7 +20,7 @@ class export_file_save(osv.TransientModel):
 		if 'respetar' in vals:
 			direc_completa =  vals['output_name']
 		# f_o = open(param.download_directory+ direc_completa , 'wb')
-		f_o = open(/tmp/+ direc_completa , 'wb')
+		f_o = open("/tmp/"+ direc_completa , 'wb')
 		f_o.write(val_tmp)
 		f_o.close()
 		t.link = param.download_url + direc_completa
