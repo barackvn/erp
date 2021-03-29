@@ -17,6 +17,16 @@ from math import modf
 class HrPayslipExt(models.Model):
     _inherit = 'hr.payslip'
 
+    monto_descanso = fields.Float("Monto por Descanso", compute="_get_descanso")
+
+    def _get_descanso(self):
+        descansos_ids = self.env['breaks.line.bl'].search([('employee_id', '=', self.employee_id.id), ('period', '=', self.payslip_run_id.id)])
+        amount = 0
+        for descanso in descansos_ids:
+            amount += descanso.amount
+
+        self.monto_descanso = amount
+
     @api.multi
     def imprimir_boleta(self):
         self.ensure_one()
