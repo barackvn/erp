@@ -19,8 +19,7 @@ class export_file_save(osv.TransientModel):
 		direc_completa = self.env.cr.dbname + '-' + vals['output_name'].split('.')[0] + '_' + str(t.id) +'.'+  vals['output_name'].split('.')[1]
 		if 'respetar' in vals:
 			direc_completa =  vals['output_name']
-		# f_o = open(param.download_directory+ direc_completa , 'wb')
-		f_o = open("/tmp/"+ direc_completa , 'wb')
+		f_o = open(param.download_directory+ direc_completa , 'wb')
 		f_o.write(val_tmp)
 		f_o.close()
 		t.link = param.download_url + direc_completa
