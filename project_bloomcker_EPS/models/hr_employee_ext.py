@@ -11,3 +11,5 @@ class EmployeeExt(models.Model):
     import_mobility = fields.Boolean(string="Condición de Trabajo", help="Posee Importe por Movilidad?", default=False)
     plan_eps = fields.Char('Plan EPS')
     import_food = fields.Float('Importe Alimentario', default=0)
+    work_condition = fields.Float('Condición de Trabajo', default=0)
+    work_condition_fuel = fields.Float('Condición de Trabajo Combustible', default=0)

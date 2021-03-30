@@ -18,6 +18,15 @@ class HrPayslipExt(models.Model):
     _inherit = 'hr.payslip'
 
     monto_descanso = fields.Float("Monto por Descanso", compute="_get_descanso")
+    comi_promedio = fields.Float("Promedio de Comisiones", compute="_get_comisiones")
+    fault_ids = fields.One2many('faults.bl', 'slip_base_id', string='Lineas de Faltas', ondelete='cascade')
+
+    def _get_comisiones(self):
+        comisiones_ids = self.env['hr.payslip.line'].search([('employee_id', '=', self.employee_id.id), ('code', '=', 'COMI')], limit=6)
+        monto = 0
+        for i in comisiones_ids:
+            monto += i.total
+        self.comi_promedio = monto / len(comisiones_ids)
 
     def _get_descanso(self):
         descansos_ids = self.env['breaks.line.bl'].search([('employee_id', '=', self.employee_id.id), ('period', '=', self.payslip_run_id.id)])
@@ -26,6 +35,42 @@ class HrPayslipExt(models.Model):
             amount += descanso.amount
 
         self.monto_descanso = amount
+
+    @api.multi
+    def compute_sheet(self):
+        config = self.env['planilla.quinta.categoria'].search([])
+        if len(config) == 0:
+            raise ValidationError(
+                u'No esta configurado los parametros para Quinta Categoria')
+        config = config[0]
+
+        breaks = self.env['breaks.line.bl'].search([('employee_id', '=', self.employee_id.id), ('period', '=', self.payslip_run_id.id)])
+        days_total = 0
+        days_break = 0
+        days_faults = 0
+
+        for i in breaks:
+            days_break += i.days_total
+
+        for i in self.periodos_devengue:
+            days_total += i.dias
+
+        for i in self.fault_ids:
+            days_faults += i.days
+
+        for days_line in self.worked_days_line_ids:
+            if days_line.code == "DVAC":
+                days_line.number_of_days = days_total
+            elif days_line.code == "DSUBE":
+                days_line.number_of_days = days_break
+            elif days_line.code == "FAL":
+                days_line.number_of_days = days_faults
+            elif days_line.code == "DLAB":
+                days_line.number_of_days = 30 - days_total - days_break - days_faults
+
+        self.env.cr.execute("""delete from hr_payslip_line
+                            where employee_id = """+str(self.employee_id.id)+""" and slip_id = """+str(self.id))
+        super(HrPayslipExt, self).compute_sheet()
 
     @api.multi
     def imprimir_boleta(self):

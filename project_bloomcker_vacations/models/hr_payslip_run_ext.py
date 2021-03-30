@@ -410,7 +410,7 @@ class HrPayslipRunExt(models.Model):
 		descansos_ids = self.env['breaks.line.bl'].search([('employee_id', '=', payslips[0].employee_id.id), ('period', '=', payslips[0].payslip_run_id.id)])
 		if payslips[0].periodos_devengue or descansos_ids:
 			detalle_vacaciones = []
-			elements.append(Table([[Paragraph("Vacaciones y Descansos", style_cell_bold)]], style=[
+			elements.append(Table([[Paragraph("Vacaciones, Descansos y Faltas", style_cell_bold)]], style=[
 				('BACKGROUND', (0, 0), (7, 0), colorHeader),
 				('BOX', (0, 0), (-1, -1), 0.5, colors.black),
 				('ALIGN', (0, 0), (-1, -1), 'CENTER')
@@ -429,6 +429,13 @@ class HrPayslipRunExt(models.Model):
 				date_start = Paragraph(str(i.date_start), style_cell_right)
 				date_end = Paragraph(str(i.date_end), style_cell_right)
 				dias = Paragraph(str(i.days_total), style_cell_right)
+				detalle_vacaciones.append([tipo, date_start, date_end, dias,])
+
+			for i in payslips[0].fault_ids:
+				tipo = Paragraph("Falta", style_cell_left)
+				date_start = Paragraph(str(i.date_start), style_cell_right)
+				date_end = Paragraph(str(i.date_end), style_cell_right)
+				dias = Paragraph(str(i.days), style_cell_right)
 				detalle_vacaciones.append([tipo, date_start, date_end, dias,])
 
 			t = Table(detalle_vacaciones, style=[
