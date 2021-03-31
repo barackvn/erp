@@ -26,12 +26,15 @@ class HrPayslipExt(models.Model):
         monto = 0
         contador = 0
         for i in comisiones_ids:
+            print(self.date_from)
             if self.date_from[0:4] == str(datetime.now().date())[0:4]:
                 if int(self.date_from[5:7]) in list(range(1,7)):
                     inicio = 1
                 else:
                     inicio = int(self.date_from[5:7]) - 5
                 lista = list(range(inicio, int(self.date_from[5:7]) + 1))
+                print(lista)
+                print(i.slip_id.date_from[5:7])
                 if int(i.slip_id.date_from[5:7]) in lista:
                     monto += i.total
                     contador += 1
