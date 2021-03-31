@@ -34,7 +34,7 @@ class HrPayslipExt(models.Model):
                     inicio = int(self.date_from[5:7]) - 5
                 lista = list(range(inicio, int(self.date_from[5:7]) + 1))
                 print(lista)
-                print(i.slip_id.date_from[5:7])
+                print(i.slip_id.date_from)
                 if int(i.slip_id.date_from[5:7]) in lista:
                     monto += i.total
                     contador += 1
