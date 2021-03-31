@@ -22,11 +22,25 @@ class HrPayslipExt(models.Model):
     fault_ids = fields.One2many('faults.bl', 'slip_base_id', string='Lineas de Faltas', ondelete='cascade')
 
     def _get_comisiones(self):
-        comisiones_ids = self.env['hr.payslip.line'].search([('employee_id', '=', self.employee_id.id), ('code', '=', 'COMI')], limit=6)
+        comisiones_ids = self.env['hr.payslip.line'].search([('employee_id', '=', self.employee_id.id), ('code', '=', 'COMI')])
         monto = 0
+        contador = 0
         for i in comisiones_ids:
-            monto += i.total
-        self.comi_promedio = monto / len(comisiones_ids)
+            if self.date_from[0:4] == str(datetime.now().date())[0:4]:
+                if int(self.date_from[5:7]) in list(range(1,7)):
+                    inicio = 1
+                else:
+                    inicio = int(self.date_from[5:7]) - 5
+                lista = list(range(inicio, int(self.date_from[5:7]) + 1))
+                if int(i.slip_id.date_from[5:7]) in lista:
+                    monto += i.total
+                    contador += 1
+        if contador and monto:
+            print(monto)
+            print(contador)
+            self.comi_promedio = monto / contador
+        else:
+            self.comi_promedio = 0
 
     def _get_descanso(self):
         descansos_ids = self.env['breaks.line.bl'].search([('employee_id', '=', self.employee_id.id), ('period', '=', self.payslip_run_id.id)])
