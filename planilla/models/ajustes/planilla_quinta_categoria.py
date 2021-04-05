@@ -522,9 +522,12 @@ class quinta_categoria(models.Model):
         employees = []
         for i in nomina.slip_ids:
             grati_julio = 0
+            grati_dicie = 0
             for j in i.line_ids:
                 if j.code == "PROGRATI":
                     grati_julio = j.total
+                elif j.code == "GRATDIC":
+                    grati_dicie = j.total
 
             if i.employee_id.id not in employees:
                 if i.contract_id.regimen_laboral_empresa != 'practicante':
@@ -570,7 +573,8 @@ class quinta_categoria(models.Model):
                             gratificacion_julio = grati_julio
                         else:
                             gratificacion_julio = 0
-                        gratificacion_diciembre = res[0]['gnp']
+                        # gratificacion_diciembre = res[0]['gnp']
+                        gratificacion_diciembre = grati_dicie
                     elif fecha_ini.month == 12:
                         gratificacion = self.env['planilla.gratificacion'].search([('year','=',self.periodo.fiscalyear_id.name),('tipo','=','07')])
                         if gratificacion:
@@ -582,13 +586,15 @@ class quinta_categoria(models.Model):
                         gratificacion = self.env['planilla.gratificacion'].search([('year','=',self.periodo.fiscalyear_id.name),('tipo','=','12')])
                         if gratificacion:
                             line = next(iter(filter(lambda l:l.employee_id.id == i.employee_id.id,gratificacion.planilla_gratificacion_lines)),None)
-                            gratificacion_diciembre = line.total if line else 0
+                            # gratificacion_diciembre = line.total if line else 0
+                            gratificacion_diciembre = grati_dicie
                         else:
                             gratificacion_diciembre = 0
                     else:
                         # gratificacion_julio = res[0]['gfp']
                         gratificacion_julio = grati_julio
-                        gratificacion_diciembre = res[0]['gnp']
+                        # gratificacion_diciembre = res[0]['gnp']
+                        gratificacion_diciembre = grati_dicie
 
                     respuesta = self.datos_quinta(config, i.employee_id,remuneracion_ordinaria_afecta, remuneracion_extraordinaria_afecta,
                                                 gratificacion_julio, gratificacion_diciembre, 0, 0, 0, 0,remuneracion_basica_quinta)
