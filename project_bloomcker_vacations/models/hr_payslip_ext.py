@@ -23,24 +23,24 @@ class HrPayslipExt(models.Model):
     comisiones_aux = fields.Float("campo aux para comisiones")
 
     def _get_comisiones(self):
-        comisiones_ids = self.env['hr.payslip.line'].search([('employee_id', '=', self.employee_id.id), ('code', '=', 'COMI')])
-        monto = 0
-        contador = 0
-        for i in comisiones_ids:
-            if self.date_from[0:4] == str(datetime.now().date())[0:4]:
-                if int(self.date_from[5:7]) in list(range(1,7)):
-                    inicio = 1
-                else:
-                    inicio = int(self.date_from[5:7]) - 5
-                lista = list(range(inicio, int(self.date_from[5:7]) + 1))
-                if int(i.slip_id.date_from[5:7]) in lista:
-                    monto += i.total
-                    contador += 1
-        if contador and monto:
-            print("por aqui luis")
-            self.comi_promedio = monto / contador
-        else:
-            self.comi_promedio = 0
+        for j in self:
+            comisiones_ids = j.env['hr.payslip.line'].search([('employee_id', '=', j.employee_id.id), ('code', '=', 'COMI')])
+            monto = 0
+            contador = 0
+            for i in comisiones_ids:
+                if j.date_from[0:4] == str(datetime.now().date())[0:4]:
+                    if int(j.date_from[5:7]) in list(range(1,7)):
+                        inicio = 1
+                    else:
+                        inicio = int(j.date_from[5:7]) - 5
+                    lista = list(range(inicio, int(j.date_from[5:7]) + 1))
+                    if int(i.slip_id.date_from[5:7]) in lista:
+                        monto += i.total
+                        contador += 1
+            if contador and monto:
+                j.comi_promedio = monto / contador
+            else:
+                j.comi_promedio = 0
 
     def _get_descanso(self):
         descansos_ids = self.env['breaks.line.bl'].search([('employee_id', '=', self.employee_id.id), ('period', '=', self.payslip_run_id.id)])
@@ -52,7 +52,6 @@ class HrPayslipExt(models.Model):
 
     @api.multi
     def compute_sheet(self):
-        print("El monto es:" + str(self.comi_promedio))
         self.comisiones_aux = self.comi_promedio
         config = self.env['planilla.quinta.categoria'].search([])
         if len(config) == 0:
@@ -86,7 +85,6 @@ class HrPayslipExt(models.Model):
 
         self.env.cr.execute("""delete from hr_payslip_line
                             where employee_id = """+str(self.employee_id.id)+""" and slip_id = """+str(self.id))
-        print("El monto real es:" + str(self.comisiones_aux))
         super(HrPayslipExt, self).compute_sheet()
 
     @api.multi
