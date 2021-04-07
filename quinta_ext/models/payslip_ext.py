@@ -7,12 +7,12 @@ import logging
 class PayslipExt(models.Model):
     _inherit = 'hr.payslip'
 
-    grat_julio = fields.Float(u'Gratificación de Julio')
+    grat_julio = fields.Float(u'Gratificación de Julio', compute="_get_grat_julio")
 
     def _get_grat_julio(self):
         date = self.date_from
-        date[3:5] = "07"
-        payslip_run_id = self.env['hr.payslip.run'].search([('date_start', '=', date)], limit=1)
+        f = date[0:5]+"07"+date[7:]
+        payslip_run_id = self.env['hr.payslip.run'].search([('date_start', '=', f)], limit=1)
         print("Aqui luis")
         print(date)
         print(payslip_run_id)
