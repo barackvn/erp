@@ -22,7 +22,7 @@ class QuintaDetalExt(models.Model):
             if i.employee_id.id == self.empleado.id:
                 proyec_remu = 0
                 for j in i.line_ids:
-                    if j.code == "PROYREMQUI":
+                    if j.code == "PROYREM":
                         proyec_remu = j.total
 
         self.grat_compu = proyec_remu
@@ -63,9 +63,9 @@ class QuintaExt(models.Model):
                             grati_julio = j.total
                         elif j.code == "GRATDIC":
                             grati_dicie = j.total
-                        elif j.code == "PROYREMQUI":
+                        elif j.code == "PROYREM":
                             proyec_remu = j.total
-                    
+
                     sql = """
                         select distinct
                         min(hp.id) as slip_id,
@@ -441,7 +441,7 @@ class QuintaExt(models.Model):
                 if i.employee_id.id == self.new_employee_id.id:
                     proyec_remu = 0
                     for j in i.line_ids:
-                        if j.code == "PROYREMQUI":
+                        if j.code == "PROYREM":
                             proyec_remu = j.total
 
                     sql = """
@@ -537,7 +537,7 @@ class QuintaExt(models.Model):
             # remuneracion_basica_quinta = self.env['hr.payslip.line'].search(
             #     [('slip_id', '=', row.slip_id.id), ('code', '=', config.remuneracion_basica_quinta.code)]).amount
             remuneracion_basica_quinta = self.env['hr.payslip.line'].search(
-                [('slip_id', '=', row.slip_id.id), ('code', '=', 'PROYREMQUI')]).amount
+                [('slip_id', '=', row.slip_id.id), ('code', '=', 'PROYREM')]).amount
             remuneracion_extraordinaria_afecta = self.env['hr.payslip.line'].search(
                 [('slip_id', '=', row.slip_id.id), ('code', '=', config.remuneracion_extraordinaria_afecta.code)]).amount
             respuesta = self.datos_quinta(config, row.empleado, remuneracion_ordinaria_afecta+row.rem_ord_otra_empresa, remuneracion_extraordinaria_afecta+row.rem_ext_otra_empresa,
