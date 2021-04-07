@@ -9,7 +9,8 @@
         "planilla"
     ],
     "data": [
-        'views/quinta_ext_view.xml'
+        'views/quinta_ext_view.xml',
+        'views/payslip_ext.xml'
     ],
     "application": True,
 }

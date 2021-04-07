@@ -6,7 +6,7 @@
             <field name="model">quinta.categoria.detalle</field>
             <field name="inherit_id" ref="planilla.oficial_quinta_categoria_detalle_view_form"/>
             <field name="arch" type="xml">
-                <xpath expr="//field[@name='grat_diciem']" position="after">
+                <xpath expr="//field[@name='proyec_anual']" position="before">
                     <field name="grat_compu"/>
                 </xpath>
             </field>
