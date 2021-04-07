@@ -6,6 +6,9 @@
             <field name="model">breaks.bl</field>
             <field name="arch" type="xml">
                 <form string="Gestión Descansos">
+                    <header>
+                        <button name="open_lines" type="object" string="Abrir Lineas" class="oe_highlight"/>
+                    </header>
                     <sheet>
                         <h1>Gestión de Descansos</h1>
                         <group>
@@ -69,6 +72,8 @@
                     <field name="dni"/>
                     <field name="employee_id"/>
                     <field name="state"/>
+                    <field name="alert_check" invisible="1"/>
+                    <button class="oe_stat_button" name="send_message" type="object" icon="fa-hand-paper-o" attrs="{'invisible':[('alert_check', '=' ,False)]}"></button>
                 </tree>
             </field>
         </record>

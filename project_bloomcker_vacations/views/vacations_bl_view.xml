@@ -7,8 +7,8 @@
             <field name="arch" type="xml">
                 <form string="Gestión Vacaciones">
                     <header>
-                        <!-- <button name="get_lines" type="object" string="Actualizar Vacaciones" class="oe_highlight"/> -->
                         <button name="put_lines" type="object" string="Importar a Boleta" class="oe_highlight"/>
+                        <button name="open_lines" type="object" string="Abrir Lineas" class="oe_highlight"/>
                     </header>
                     <sheet>
                         <h1>Gestión de Vacaciones</h1>

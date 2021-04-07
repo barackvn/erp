@@ -38,6 +38,7 @@ class HrPayslipExt(models.Model):
                         monto += i.total
                         contador += 1
             if contador and monto:
+                print("por aqui luis")
                 j.comi_promedio = monto / contador
             else:
                 j.comi_promedio = 0

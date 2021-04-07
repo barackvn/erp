@@ -87,6 +87,20 @@ class VacationsBL(models.Model):
             }
             line = self.env['hr.devengue'].create(vals)
 
+    def open_lines(self):
+        compose_form = self.env.ref('project_bloomcker_vacations.vacations_line_bl_tree', raise_if_not_found=False)
+        domain = [('vacations_base_id', '=', self.id)]
+        return {
+                    'name': 'Lineas de Vacaciones',
+                    'domain': domain,
+                    'type': 'ir.actions.act_window',
+                    'view_type': 'form',
+                    'view_mode': 'tree,form',
+                    'res_model': 'vacations.line.bl',
+                    'views': [(compose_form.id, 'tree')],
+                    'view_id': compose_form.id,
+                }
+
 class VacationsLine(models.Model):
 
     _name = 'vacations.line.bl'
