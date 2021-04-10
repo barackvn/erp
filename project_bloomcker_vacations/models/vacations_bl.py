@@ -75,17 +75,18 @@ class VacationsBL(models.Model):
 
             slip = self.env['hr.payslip'].search([('employee_id', '=', devengue.employee_id.id), ('payslip_run_id', '=', devengue.period.id)], limit=1)
             if not slip:
-                raise UserError(('Alguna de las lineas no es valida por no tener un nomina en el periodo indicado\n Debe Procesar Las Nominas.'))
-
-            vals = {
-                'date_end':devengue.date_end,
-                'date_start':devengue.date_start,
-                'dias':devengue.days_total,
-                'employee_id':devengue.employee_id.id,
-                'periodo_devengue':devengue.period.id,
-                'slip_id':slip.id,
-            }
-            line = self.env['hr.devengue'].create(vals)
+                pass
+                # raise UserError(('Alguna de las lineas no es valida por no tener un nomina en el periodo indicado\n Debe Procesar Las Nominas.'))
+            else:
+                vals = {
+                    'date_end':devengue.date_end,
+                    'date_start':devengue.date_start,
+                    'dias':devengue.days_total,
+                    'employee_id':devengue.employee_id.id,
+                    'periodo_devengue':devengue.period.id,
+                    'slip_id':slip.id,
+                }
+                line = self.env['hr.devengue'].create(vals)
 
     def open_lines(self):
         compose_form = self.env.ref('project_bloomcker_vacations.vacations_line_bl_tree', raise_if_not_found=False)
