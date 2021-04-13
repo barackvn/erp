@@ -12,7 +12,6 @@ class VacationsBL(models.Model):
     employee_id = fields.Many2one('hr.employee','Apellidos y Nombres')
     state = fields.Selection([ ('active', 'Activo'), ('inactive', 'Inactivo')], string='Estado')
     line_ids = fields.One2many('vacations.line.bl', 'vacations_base_id', string='Lineas de Vacaciones', ondelete='cascade')
-    # breack_ids = fields.One2many('breack.line.bl', 'vacations_base_id', string='Lineas de Descansos', ondelete='cascade')
     days_devs = fields.Integer('Días Devengados', compute="_get_days")
     days_totals = fields.Integer('Días Totales', compute="_get_days")
     days = fields.Integer('Días por Devengar', compute="_get_days")
@@ -108,26 +107,16 @@ class VacationsLine(models.Model):
 
     date_start = fields.Date("Fecha de Inicio")
     date_end = fields.Date("Fecha de Fin")
-    days_total = fields.Integer('Días')
+    days_total = fields.Integer('Días', compute="_get_days_total")
     period = fields.Many2one('hr.payslip.run', string="Periodo")
     vacations_base_id = fields.Many2one('vacations.bl')
     employee_id = fields.Many2one('hr.employee','Apellidos y Nombres', related='vacations_base_id.employee_id', readonly=True)
-#
-# class BreackLine(models.Model):
-#
-#     _name = 'breack.line.bl'
-#
-#     date_start = fields.Date("Fecha de Inicio")
-#     date_end = fields.Date("Fecha de Fin")
-#     days_total = fields.Integer('Días')
-#     dsndes = fields.Char('DSNDes')
-#     amount = fields.Float('Monto Subsidio')
-#     type_poised = fields.Selection([ ('inability', 'Incapacidad'), ('other', 'Otros')], string='Tipo de Suspensión')
-#     period = fields.Many2one('hr.payslip.run', string="Periodo")
-#     vacations_base_id = fields.Many2one('vacations.bl')
-#     employee_id = fields.Many2one('hr.employee','Apellidos y Nombres', related='vacations_base_id.employee_id', readonly=True)
 
-
-
-
-
+    def _get_days_total(self):
+        for line in self:
+            if line.date_end and line.date_start:
+                date_i = datetime.strptime(line.date_start, "%Y-%m-%d")
+                date_o = datetime.strptime(line.date_end, "%Y-%m-%d")
+                line.days_total = abs(date_o - date_i).days
+            else:
+                line.days_total = 0
