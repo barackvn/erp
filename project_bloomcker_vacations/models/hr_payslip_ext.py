@@ -47,16 +47,19 @@ class HrPayslipExt(models.Model):
         descansos_ids = self.env['breaks.line.bl'].search([('employee_id', '=', self.employee_id.id), ('period', '=', self.payslip_run_id.id)])
         amount = 0
         dias = 0
+        subsidy = 0
         for descanso in descansos_ids:
             dias += descanso.days_total
             amount += descanso.amount
+            if descanso.subsidy:
+                subsidy += descanso.amount
 
         if dias > 20:
-            self.monto_descanso = (amount/dias)*20
-            self.monto_subsidio = (amount/dias)*(dias - 20)
+            self.monto_descanso = (amount/dias)*20 - subsidy
+            self.monto_subsidio = (amount/dias)*(dias - 20) + subsidy
         else:
-            self.monto_descanso = amount
-            self.monto_subsidio = 0
+            self.monto_descanso = amount - subsidy
+            self.monto_subsidio = 0 + subsidy
 
 
 
