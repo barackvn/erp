@@ -31,7 +31,7 @@ class VacationsBL(models.Model):
                 i.days_devs += line.days_total
 
             calculo = fields.Datetime.from_string(str(i.employee_id.contract_id.date_start)) - datetime.now()
-            i.days_totals = int(-calculo.days // 360)*30
+            i.days_totals = int(-calculo.days // 30)*2.5
             i.days = i.days_totals - i.days_devs
 
 
