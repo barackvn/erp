@@ -82,7 +82,7 @@ class breaksLines(models.Model):
             if line.date_end and line.date_start:
                 date_i = datetime.strptime(line.date_start, "%Y-%m-%d")
                 date_o = datetime.strptime(line.date_end, "%Y-%m-%d")
-                line.days_total = abs(date_o - date_i).days
+                line.days_total = abs(date_o - date_i).days + 1
             else:
                 line.days_total = 0
 
