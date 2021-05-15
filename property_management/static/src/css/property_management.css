@@ -14,7 +14,24 @@
 
 /* dashboard CSS */
 
+.date_filter{
+  padding: .5rem .75rem;
+  line-height: 1.25;
+  color: #464a4c;
+  background-color: #fff;
+  background-image: none;
+  -webkit-background-clip: padding-box;
+  background-clip: padding-box;
+  border: 1px solid rgba(0,0,0,.15);
+  border-radius: .25rem;
+}
 
+.date_filter:focus {
+    color: #464a4c;
+    background-color: #fff;
+    border-color: #5cb3fd;
+    outline: 0;
+}
 
 #dashboard_wrapper {
   padding-left: 0;
@@ -209,10 +226,6 @@ a.dashboard_list-group-item {
 .ks_dashboard_header{
     border-bottom: 1px solid #cccccc;
 }
-#ks_dashboard_title{
-    padding-left: 1rem !important;
-}
-
 #ks_dashboard_title_label{
     color: #777777;
     font-size: 1.8rem;

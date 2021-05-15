@@ -678,43 +678,106 @@ class AccountAnalyticAccount(models.Model):
 
 
 	@api.model
-	def get_the_top_products(self):
+	def get_the_top_products(self,datetype,date_to=None,date_from=None):
+		if date_to==None:
+			date_to = datetime.today().strftime('%Y-%m-%d')
+		if date_from==None:
+			date_from = (datetime.strptime(fields.Date.today(), '%Y-%m-%d') + relativedelta(years=-10)).strftime('%Y-%m-%d')
+		if not date_from:
+			date_from = (datetime.strptime(fields.Date.today(), '%Y-%m-%d') + relativedelta(years=-10)).strftime('%Y-%m-%d')
+
 		assets = self.env['account.asset.asset'].search([])
-		matriz = []
-		total_quantity = []
-		product_name = []
-		cont_product = 0
-		query_vista = """
-						select
-	                    to_char(start_date, 'YYYY') as year,
-	                    to_char(start_date, 'MM') as month,
-						sum(amount) as monto
-						from tenancy_rent_schedule
-						group by to_char(start_date, 'YYYY'), to_char(start_date, 'MM')
-						order by to_char(start_date, 'YYYY') asc, to_char(start_date, 'MM') asc
-						"""
-		self.env.cr.execute(query_vista)
-		data = self.env.cr.dictfetchall()
+		total_amount = []
+		month_year_name = []
+		if datetype == 'month':
+			query_vista = """
+							select
+							to_char(start_date, 'YYYY') as year,
+							to_char(start_date, 'MM') as month,
+							sum(amount) as monto
+							from tenancy_rent_schedule
+							where (start_date between '%s' AND '%s')
+							group by to_char(start_date, 'YYYY'), to_char(start_date, 'MM')
+							order by to_char(start_date, 'YYYY') asc, to_char(start_date, 'MM') asc
+							""" % (date_from,date_to)
+			# AND (date between to_date(%s,'yyyy-mm-dd') AND to_date(%s,'yyyy-mm-dd'))
+			self.env.cr.execute(query_vista)
+			data = self.env.cr.dictfetchall()
 
-		mapped_data = dict([(d['monto'], d['year'] + d['month']) for d in data])
-		_logger.info('data')
-		_logger.info(data)
-		_logger.info(mapped_data)
+			mapped_data = list([(d['monto'], d['year'] + '-' + d['month']) for d in data])
+		if datetype == 'year':
+			query_vista = """
+							select
+							to_char(start_date, 'YYYY') as year,
+							sum(amount) as monto
+							from tenancy_rent_schedule
+							where (start_date between '%s' AND '%s')
+							group by to_char(start_date, 'YYYY')
+							order by to_char(start_date, 'YYYY') asc
+							""" % (date_from,date_to)
+			# AND (date between to_date(%s,'yyyy-mm-dd') AND to_date(%s,'yyyy-mm-dd'))
+			self.env.cr.execute(query_vista)
+			data = self.env.cr.dictfetchall()
 
-		for asset in assets:
-			for account in asset.tenancy_property_ids:
-				reached_goals = self.env['tenancy.rent.schedule'].read_group([
-					('tenancy_id',  '=', account.id)
-				], fields=['amount','start_date'], groupby=['start_date:month'])
-				rents = self.env['tenancy.rent.schedule'].search([('tenancy_id',  '=', account.id)])
-				matriz.append([len(rents),asset.name])
-		# def get_movimiento(elem):
-		# 	return elem[0]
-		#
-		# matriz.sort(key=get_movimiento, reverse=True))
-		#
-		for x in matriz:
-			total_quantity.append(x[0])
-			product_name.append(x[1])
-		final = [total_quantity,product_name]
+			mapped_data = list([(d['monto'], d['year']) for d in data])
+
+		for m in mapped_data:
+			total_amount.append(m[0])
+			month_year_name.append(m[1])
+		final = [total_amount,month_year_name]
+
+		return final
+
+	@api.model
+	def get_the_available_meters(self,datetype,date_to=None,date_from=None):
+		if date_to==None:
+			date_to = datetime.today().strftime('%Y-%m-%d')
+		if date_from==None:
+			date_from = (datetime.strptime(fields.Date.today(), '%Y-%m-%d') + relativedelta(years=-10)).strftime('%Y-%m-%d')
+		if not date_from:
+			date_from = (datetime.strptime(fields.Date.today(), '%Y-%m-%d') + relativedelta(years=-10)).strftime('%Y-%m-%d')
+
+		assets = self.env['account.asset.asset'].search([])
+		total_amount = []
+		month_year_name = []
+		total_on_lease = []
+		if datetype == 'month':
+			query_vista = """
+							select
+							to_char(age_of_property, 'YYYY') as year,
+							to_char(age_of_property, 'MM') as month,
+							sum(gfa_meter) as total_meter,
+							sum(case when state = 'normal' then (gfa_meter) else (0) end) as total_on_lease
+							from account_asset_asset
+							where (age_of_property between '%s' AND '%s')
+							group by to_char(age_of_property, 'YYYY'), to_char(age_of_property, 'MM')
+							order by to_char(age_of_property, 'YYYY') asc, to_char(age_of_property, 'MM') asc
+							""" %  (date_from,date_to)
+			# AND (date between to_date(%s,'yyyy-mm-dd') AND to_date(%s,'yyyy-mm-dd'))
+			self.env.cr.execute(query_vista)
+			data = self.env.cr.dictfetchall()
+			mapped_data = list([(d['total_meter'], d['year'] + '-' + d['month'], d['total_on_lease']) for d in data])
+		if datetype == 'year':
+			query_vista = """
+							select
+							to_char(age_of_property, 'YYYY') as year,
+							sum(gfa_meter) as total_meter,
+							sum(case when state = 'normal' then (gfa_meter) else (0) end) as total_on_lease
+							from account_asset_asset
+							where (age_of_property between '%s' AND '%s')
+							group by to_char(age_of_property, 'YYYY')
+							order by to_char(age_of_property, 'YYYY') asc
+							""" %  (date_from,date_to)
+			# AND (date between to_date(%s,'yyyy-mm-dd') AND to_date(%s,'yyyy-mm-dd'))
+			self.env.cr.execute(query_vista)
+			data = self.env.cr.dictfetchall()
+
+			mapped_data = list([(d['total_meter'], d['year'], d['total_on_lease']) for d in data])
+
+		for m in mapped_data:
+			total_amount.append(m[0])
+			month_year_name.append(m[1])
+			total_on_lease.append(m[2])
+		final = [total_amount,month_year_name,total_on_lease]
+
 		return final

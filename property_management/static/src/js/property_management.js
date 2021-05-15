@@ -11,20 +11,12 @@ odoo.define('property_management.action_export', function(require) {
   var QWeb = core.qweb;
   var _t = core._t;
 
-  console.log('property_management.action_export')
-
   var PropertyDashboard = Widget.extend({
     template: 'PropertyDashboard',
     events: {
-      'click .pos_order_today': 'pos_order_today',
-      'click .pos_order': 'pos_order',
-      'click .pos_total_sales': 'pos_order',
-      'click .pos_session': 'pos_session',
-      'click .pos_refund_orders': 'pos_refund_orders',
-      'click .pos_refund_today_orders': 'pos_refund_today_orders',
-      'change #pos_sales': 'onclick_pos_sales',
+      'change .date_filter': '_change_date_to',
+      'click .df_selection_text': '_change_ks_date_selector',
     },
-
     init: function(parent, data) {
       this.dashboards_templates = ['PosOrders'];
       this.payment_details = [];
@@ -48,331 +40,72 @@ odoo.define('property_management.action_export', function(require) {
         self.$el.parent().addClass('oe_background_grey');
       });
     },
-
-    fetch_data: function() {
-      var self = this;
-      var def1 = this._rpc({
-        model: 'product.template',
-        method: 'get_refund_details'
-      }).then(function(result) {
-        console.log(result)
-        // self.total_sale = result['total_sale'],
-        // self.total_order_count = result['total_order_count']
-        // self.total_refund_count = result['total_refund_count']
-        // self.total_session = result['total_session']
-        // self.today_refund_total = result['today_refund_total']
-        // self.today_sale = result['today_sale']
-        self.selling_product = result['selling_product'];
-        self.categories = result['categories']
-      });
-
-
-      // var def2 = self._rpc({
-      //   model: "product.template",
-      //   method: "get_the_top_products",
-      // }).then(function (res) {
-      //   console.log('get_the_top_products')
-      //   console.log(res)
-      //       // self.payment_details = res['payment_details'];
-      //       // self.top_salesperson = res['salesperson'];
-      //       // self.selling_product = res['selling_product'];
-      //   });
-      // return $.when(def1,def2);
-      return $.when(def1);
+    _change_ks_date_selector: function(event){
+      var self = this
+      var evento = $(event.currentTarget)
+      var typedate = evento.attr('id')
+      var date_to = $('#date_to').val()
+      var date_from = $('#date_from').val()
+      if (typedate == 'month'){
+        $('#month').attr('focus', '1')
+        $('#year').attr('focus', '0')
+      }else{
+        $('#month').attr('focus', '0')
+        $('#year').attr('focus', '1')
+      }
+      self.render_top_product_graph(typedate,date_to,date_from)
+      self.render_available_meters(typedate,date_to,date_from)
     },
-
+    _change_date_to: function(event){
+      var self = this
+      var evento = $(event.currentTarget)
+      var span_date = $(".df_selection_text[focus='1']")
+      var typedate = span_date.attr('id')
+      var date_to = $('#date_to').val()
+      var date_from = $('#date_from').val()
+      self.render_top_product_graph(typedate,date_to,date_from)
+      self.render_available_meters(typedate,date_to,date_from)
+    },
     render_dashboards: function() {
-      console.log('render_dashboards')
       var self = this;
+      var today = new Date();
+      var date_to = today.toISOString().substr(0, 10)
       _.each(this.dashboards_templates, function(template) {
         self.$('.o_property_dashboard').append(QWeb.render(template, {
-          widget: self
+          widget: self,
+          date_to: date_to,
         }));
       });
     },
     render_graphs: function() {
       var self = this;
       self.render_top_product_graph();
+      self.render_available_meters();
     },
-    //      get_emp_image_url: function(employee){
-    //        return window.location.origin + '/web/image?model=pos.order&field=image&id='+employee;
-    //    },
-
-
-
-
-    pos_order_today: function(e) {
-      var self = this;
-      var date = new Date();
-      var yesterday = new Date(date.getTime());
-      yesterday.setDate(date.getDate() - 1);
-      console.log(yesterday)
-      e.stopPropagation();
-      e.preventDefault();
-
-      session.user_has_group('hr.group_hr_user').then(function(has_group) {
-        if (has_group) {
-          var options = {
-            on_reverse_breadcrumb: self.on_reverse_breadcrumb,
-          };
-          self.do_action({
-            name: _t("Today Order"),
-            type: 'ir.actions.act_window',
-            res_model: 'pos.order',
-            view_mode: 'tree,form,calendar',
-            view_type: 'form',
-            views: [
-              [false, 'list'],
-              [false, 'form']
-            ],
-            domain: [
-              ['date_order', '<=', date],
-              ['date_order', '>=', yesterday]
-            ],
-            target: 'current'
-          }, options)
-        }
-      });
-
-    },
-
-
-    pos_refund_orders: function(e) {
-      var self = this;
-      var date = new Date();
-      //        alert(date,"date")
-      var yesterday = new Date(date.getTime());
-      yesterday.setDate(date.getDate() - 1);
-      console.log(yesterday)
-      e.stopPropagation();
-      e.preventDefault();
-
-      session.user_has_group('hr.group_hr_user').then(function(has_group) {
-        if (has_group) {
-          var options = {
-            on_reverse_breadcrumb: self.on_reverse_breadcrumb,
-          };
-          self.do_action({
-            name: _t("Refund Orders"),
-            type: 'ir.actions.act_window',
-            res_model: 'pos.order',
-            view_mode: 'tree,form,calendar',
-            view_type: 'form',
-            views: [
-              [false, 'list'],
-              [false, 'form']
-            ],
-            domain: [
-              ['amount_total', '<', 0.0]
-            ],
-
-            //                    domain: [['date_order', '=', date]],
-            target: 'current'
-          }, options)
-        }
-      });
-
-    },
-    pos_refund_today_orders: function(e) {
-      var self = this;
-      var date = new Date();
-      //        alert(date,"date")
-      var yesterday = new Date(date.getTime());
-      yesterday.setDate(date.getDate() - 1);
-      console.log(yesterday)
-      e.stopPropagation();
-      e.preventDefault();
-
-      session.user_has_group('hr.group_hr_user').then(function(has_group) {
-        if (has_group) {
-          var options = {
-            on_reverse_breadcrumb: self.on_reverse_breadcrumb,
-          };
-          self.do_action({
-            name: _t("Refund Orders"),
-            type: 'ir.actions.act_window',
-            res_model: 'pos.order',
-            view_mode: 'tree,form,calendar',
-            view_type: 'form',
-            views: [
-              [false, 'list'],
-              [false, 'form']
-            ],
-            domain: [
-              ['amount_total', '<', 0.0],
-              ['date_order', '<=', date],
-              ['date_order', '>=', yesterday]
-            ],
-            //                    domain: [['date_order', '=', date]],
-            target: 'current'
-          }, options)
-        }
-      });
-
-    },
-
-    pos_order: function(e) {
-      var self = this;
-      var date = new Date();
-      var yesterday = new Date(date.getTime());
-      yesterday.setDate(date.getDate() - 1);
-      console.log(yesterday)
-      e.stopPropagation();
-      e.preventDefault();
-      session.user_has_group('hr.group_hr_user').then(function(has_group) {
-        if (has_group) {
-          var options = {
-            on_reverse_breadcrumb: self.on_reverse_breadcrumb,
-          };
-          self.do_action({
-            name: _t("Total Order"),
-            type: 'ir.actions.act_window',
-            res_model: 'pos.order',
-            view_mode: 'tree,form,calendar',
-            view_type: 'form',
-            views: [
-              [false, 'list'],
-              [false, 'form']
-            ],
-            //                    domain: [['amount_total', '<', 0.0]],
-            target: 'current'
-          }, options)
-        }
-      });
-
-    },
-    pos_session: function(e) {
-      var self = this;
-      e.stopPropagation();
-      e.preventDefault();
-      session.user_has_group('hr.group_hr_user').then(function(has_group) {
-        if (has_group) {
-          var options = {
-            on_reverse_breadcrumb: self.on_reverse_breadcrumb,
-          };
-          self.do_action({
-            name: _t("sessions"),
-            type: 'ir.actions.act_window',
-            res_model: 'pos.session',
-            view_mode: 'tree,form,calendar',
-            view_type: 'form',
-            views: [
-              [false, 'list'],
-              [false, 'form']
-            ],
-            //                     domain: [['state','=', In Progress]],
-            target: 'current'
-          }, options)
-        }
-      });
-
-    },
-
-    onclick_pos_sales: function(events) {
-      var option = $(events.target).val();
-      console.log('came monthly')
-      var self = this
-      var ctx = self.$("#canvas_1");
-      rpc.query({
-        model: "product.template",
-        method: "get_department",
-        args: [option],
-      }).then(function(arrays) {
-        console.log(arrays)
-        var data = {
-          labels: arrays[1],
-          datasets: [{
-              data: arrays[0],
-              backgroundColor: [
-                "rgba(255, 99, 132,1)",
-                "rgba(54, 162, 235,1)",
-                "rgba(75, 192, 192,1)",
-                "rgba(153, 102, 255,1)",
-                "rgba(10,20,30,1)"
-              ],
-              borderColor: [
-                "rgba(255, 99, 132, 0.2)",
-                "rgba(54, 162, 235, 0.2)",
-                "rgba(75, 192, 192, 0.2)",
-                "rgba(153, 102, 255, 0.2)",
-                "rgba(10,20,30,0.3)"
-              ],
-              borderWidth: 1
-            },
-
-          ]
-        };
-
-        //options
-        var options = {
-          responsive: true,
-          legend: {
-            display: false,
-            position: "bottom",
-            labels: {
-              fontColor: "#333",
-              fontSize: 16
-            }
-          },
-          scales: {
-            yAxes: [{
-              ticks: {
-                min: 0
-              },
-              scaleLabel: {
-                display: true,
-                labelString: 'N° de movimientos'
-              }
-            }],
-          }
-        };
-
-        //create Chart class object
-        if (window.myCharts != undefined)
-          window.myCharts.destroy();
-        window.myCharts = new Chart(ctx, {
-          //          var chart = new Chart(ctx, {
-          type: "bar",
-          data: data,
-          options: options
-        });
-
-      });
-    },
-    render_top_product_graph: function() {
+    render_top_product_graph: function(datetype='month',date_to,date_from) {
       console.log('render_top_product_graph')
+      console.log(datetype)
+      console.log(date_to)
+      console.log(date_from)
       var self = this
-      var ctx = self.$(".top_selling_product");
-      AccountAnalytic.call("get_the_top_products", []).then(function(arrays) {
-        console.log(arrays)
+      var ctx = self.$(".top_selling_product")
+      AccountAnalytic.call("get_the_top_products", [datetype,date_to,date_from]).then(function(arrays) {
+        $('#lineChart').replaceWith($('<canvas id="lineChart"  class="top_selling_product" width="800" height="450"></canvas>'));
         var data = {
           labels: arrays[1],
           datasets: [{
-              label: "Movimientos",
+              label: "Ventas",
               data: arrays[0],
-              backgroundColor: [
-                "rgba(255, 99, 132,1)",
-                "rgba(54, 162, 235,1)",
-                "rgba(75, 192, 192,1)",
-                "rgba(153, 102, 255,1)",
-                "rgba(10,20,30,1)"
-              ],
-              borderColor: [
-                "rgba(255, 99, 132, 0.2)",
-                "rgba(54, 162, 235, 0.2)",
-                "rgba(75, 192, 192, 0.2)",
-                "rgba(153, 102, 255, 0.2)",
-                "rgba(10,20,30,0.3)"
-              ],
-              borderWidth: 1
+              borderColor: 'rgba(255, 0, 0, 0.5)',
+              backgroundColor: 'rgb(255,0,0,0.1)',
             },
-
           ]
         };
-
         //options
         var options = {
           responsive: true,
+          backgroundColor: 'rgb(255,0,0)',
+          borderColor: 'rgb(255,0,0)',
           title: {
             display: true,
             position: "top",
@@ -395,19 +128,92 @@ odoo.define('property_management.action_export', function(require) {
               },
               scaleLabel: {
                 display: true,
-                labelString: 'N° de movimientos'
+                labelString: 'Fecha de renta'
               }
             }],
           }
         };
-
         //create Chart class object
-        var chart = new Chart(ctx, {
-          type: "horizontalBar",
+        new Chart(document.getElementById("lineChart"), {
+          type: "line",
           data: data,
           options: options
         });
+      });
+    },
 
+    render_available_meters: function(datetype='month',date_to,date_from) {
+      console.log('render_available_meters')
+      console.log(datetype)
+      console.log(date_to)
+      console.log(date_from)
+      var self = this
+      var ctx = self.$(".render_available_meters_ctx")[0].getContext('2d')
+      AccountAnalytic.call("get_the_available_meters", [datetype,date_to,date_from]).then(function(arrays) {
+        $('#barChart').replaceWith($('<canvas id="barChart" class="render_available_meters_ctx" width="800" height="450"></canvas>'));
+        var data = {
+          labels: arrays[1],
+          datasets: [
+            {
+              label: "Espacio Total",
+              data: arrays[0],
+              borderColor: '#9ad0f5',
+              backgroundColor: '#9ad0f5',
+            },
+            {
+              label: "Espacio Ocupado",
+              data: arrays[2],
+              borderColor: '#ffe6aa',
+              backgroundColor: '#ffe6aa',
+            },
+          ]
+        };
+        //options
+        var options = {
+          responsive: true,
+          backgroundColor: '#dbf3f3',
+          borderColor: '#4bc0c0',
+          title: {
+            display: true,
+            position: "top",
+            text: "Espacio total - Espacio ocupado en m2",
+            fontSize: 18,
+            fontColor: "#111"
+          },
+          legend: {
+            position: "bottom",
+            labels: {
+              fontColor: "#333",
+            }
+          },
+          scales: {
+            xAxes: [{
+              ticks: {
+                min: 0
+              },
+              scaleLabel: {
+                display: true,
+                labelString: 'Fecha'
+              }
+            }],
+            yAxes: [{
+              ticks: {
+                min: 0
+              },
+              scaleLabel: {
+                display: true,
+                labelString: 'Metros cuadrados'
+              }
+            }],
+          }
+        };
+        //create Chart class object
+
+       new Chart(document.getElementById("barChart"), {
+          type: "bar",
+          data: data,
+          options: options
+        });
       });
     },
 
