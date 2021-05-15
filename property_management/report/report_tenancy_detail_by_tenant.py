@@ -24,8 +24,8 @@ class TenancyDetailByTenant(models.AbstractModel):
                 cur = data.currency_id.symbol
             tenancy_list.append({
                 'property_id': data.property_id.name,
-                'date_start': datetime.strftime(data.date_start, DF),
-                'date': datetime.strftime(data.date, DF),
+                'date_start': datetime.strptime(data.date_start, DF).date(),
+                'date': datetime.strptime(data.date, DF).date(),
                 'rent': cur + ustr(data.rent),
                 'deposit': cur + ustr(data.deposit),
                 'rent_type_id': data.rent_type_id.name,
@@ -58,9 +58,10 @@ class TenancyDetailByTenant(models.AbstractModel):
             'get_details': detail_res,
         }
         docargs['data'].update({
-            'end_date': datetime.strftime(
-                docargs.get('data').get('end_date'), DF),
-            'start_date': datetime.strftime(
-                docargs.get('data').get('start_date'), DF)})
+            'end_date': datetime.strptime(
+                docargs.get('data').get('end_date'), DF).date(),
+            'start_date': datetime.strptime(
+                docargs.get('data').get('start_date'), DF).date()
+            })
         return self.env['report'].render(
             'property_management.report_tenancy_by_tenant', docargs)

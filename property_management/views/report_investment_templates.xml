@@ -71,5 +71,13 @@
 
 	<menuitem action="action_investment_analysis_report" id="menu_report_property_chart" parent="property_management.menu_report_sub" sequence="10"/>
 
+
+	<record id="action_dashboard" model="ir.actions.client">
+		<field name="name">Dashboard</field>
+		<field name="tag">property_dashboard</field>
+	</record>
+
+	<menuitem name="Dashboard" id="property_dashboard_menuitem" parent="property_management.menu_report_sub"  groups="base.group_user" sequence="1" action="action_dashboard"/>
+
 </data>
 </odoo>

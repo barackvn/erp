@@ -42,6 +42,7 @@
         'views/account_analytic_view.xml',
         'views/account_view.xml',
         'views/report_property_external_templates.xml',
+        'views/assets.xml',
         'wizard/contract_expiry_report_view.xml',
         'wizard/send_mail_view.xml',
         'wizard/send_sms_view.xml',
@@ -70,6 +71,9 @@
         'views/lead_view.xml',
         'views/sale_view.xml',
         # 'views/property_management.xml',
+    ],
+    "qweb":[
+        "static/src/xml/property.xml"
     ],
     'demo': ['data/account_asset_demo.xml'],
     # 'qweb': ['static/src/xml/property_management.xml'],

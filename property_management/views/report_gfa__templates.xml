@@ -66,5 +66,13 @@
 
     <menuitem action="action_gfa_report_all" id="menu_report_gfa" parent="property_management.menu_report_sub" sequence="10"/>
 
+    <!--Action For Dashboard Property-->
+    <record id="action_dashboard" model="ir.actions.client">
+      <field name="name">Dashboard</field>
+      <field name="tag">property_dashboard</field>
+    </record>
+
+    <menuitem name="Dashboard" id="property_dashboard_menuitem" parent="property_management.menu_report_sub"  groups="base.group_user" sequence="75" action="action_dashboard"/>
+
 </data>
 </odoo>

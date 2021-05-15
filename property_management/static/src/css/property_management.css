@@ -12,4 +12,341 @@
 
 .my_class [data-id="book_property"]{width: 2px;} [data-id="Avalbl_property"]{width: 4px;}
 
+/* dashboard CSS */
 
+
+
+#dashboard_wrapper {
+  padding-left: 0;
+}
+.dashboard_huge {
+  font-size: 50px;
+  line-height: normal;
+}
+.grafico-barras-left {
+  padding: 3px;
+    position: relative;
+    width: 100%;
+}
+.grafico-barras-left {
+  padding: 3px;
+    position: relative;
+    width: 100%;
+}
+
+.container::-webkit-scrollbar {
+    width: 8px;     /* Tamaño del scroll en vertical */
+    height: 8px;    /* Tamaño del scroll en horizontal */
+    display: none;  /* Ocultar scroll */
+}
+
+/* Flot Chart Containers */
+
+.panel {
+    margin-bottom: 20px;
+    background-color: #fff;
+    border: 1px solid transparent;
+    border-radius: 4px;
+    -webkit-box-shadow: 0 1px 1px rgba(0,0,0,.05);
+    box-shadow: 0 1px 1px rgba(0,0,0,.05);
+}
+.panel-footer {
+    padding: 10px 2px;
+    background-color: #f5f5f5;
+    border-top: 1px solid #ddd;
+    border-bottom-right-radius: 3px;
+    border-bottom-left-radius: 3px;
+}
+
+.panel-default {
+    border-color: #ddd;
+}
+.panel-primary {
+    border-color: #428bca;
+}
+.panel-primary>.dashboard_panel-heading {
+    color: #fff;
+    background-color: #428bca;
+    border-color: #428bca;
+}
+.dashboard_huge {
+  font-size: 40px;
+}
+
+.dashboard_panel-heading {
+    padding: 10px 15px;
+    border-bottom: 1px solid transparent;
+    border-top-left-radius: 3px;
+    border-top-right-radius: 3px;
+}
+
+.dashboard_panel-green {
+  border-color: #5cb85c;
+}
+
+.dashboard_panel-green .dashboard_panel-heading {
+  border-color: #5cb85c;
+  color: #fff;
+  background-color: #5cb85c;
+}
+
+
+.dashboard_panel-green a {
+  color: #5cb85c;
+}
+
+.dashboard_panel-green a:hover {
+  color: #3d8b3d;
+}
+
+.dashboard_panel-red {
+  border-color: #d9534f;
+}
+
+.dashboard_panel-red .dashboard_panel-heading {
+  border-color: #d9534f;
+  color: #fff;
+  background-color: #d9534f;
+}
+
+.dashboard_panel-red a {
+  color: #d9534f;
+}
+
+.dashboard_panel-red a:hover {
+  color: #b52b27;
+}
+
+.dashboard_panel-yellow {
+  border-color: #f0ad4e;
+}
+
+.dashboard_panel-yellow .dashboard_panel-heading {
+  border-color: #f0ad4e;
+  color: #fff;
+  background-color: #f0ad4e;
+}
+
+.dashboard_panel-yellow a {
+  color: #f0ad4e;
+}
+
+.dashboard_panel-yellow a:hover {
+  color: #df8a13;
+}
+
+
+.dashboard_list-group {
+    padding-left: 0;
+    margin-bottom: 20px;
+}
+.dashboard_list-group-item {
+    position: relative;
+    display: block;
+    padding: 10px 15px;
+    margin-bottom: -1px;
+    background-color: #fff;
+    border: 1px solid #ddd;
+}
+.dashboard_list-group-item:first-child {
+    border-top-left-radius: 4px;
+    border-top-right-radius: 4px;
+}
+a.dashboard_list-group-item {
+    color: #555;
+}
+.dashboard_list-group-item>.badge {
+    float: right;
+}
+.dashboard_badge {
+    display: inline-block;
+    min-width: 10px;
+    padding: 3px 7px;
+    font-size: 12px;
+    font-weight: 700;
+    line-height: 1;
+    color: #fff;
+    text-align: center;
+    white-space: nowrap;
+    vertical-align: baseline;
+    background-color: #777;
+    border-radius: 10px;
+}
+
+
+
+
+
+
+.ks_dashboard_ninja {
+      margin-bottom: 20px;
+      background-color: lightblue;
+      -webkit-box-flex: 1;
+      -webkit-flex: 1 1 auto;
+      flex: 1 1 auto;
+      position: relative;
+      overflow: auto;
+      height: 100%;
+}
+.ks_dashboard_icon_l5{
+    position : absolute;
+    z-index: 1;
+}
+
+.ks_dashboard_icon_l5 > img{
+    width: 20px;
+    height: 20px;
+    margin: 10px;
+}
+.ks_dashboard_icon_l5 span
+{
+    font-size: 20px;
+    margin: 10px;
+}
+.ks_dashboard_header{
+    border-bottom: 1px solid #cccccc;
+}
+.ks_dashboard_header{
+    border-bottom: 1px solid #cccccc;
+}
+#ks_dashboard_title{
+    padding-left: 1rem !important;
+}
+
+#ks_dashboard_title_label{
+    color: #777777;
+    font-size: 1.8rem;
+}
+
+@media (max-width: 992px){
+    .ks_dashboard_ninja_toggle_menu:before {
+        content: "\f142";
+    }
+    #ks_dashboard_title_label{
+        font-size: 1.5rem;
+    }
+    #ks_dashboard_title{
+        display: flex;
+        justify-content: space-between;
+    }
+}
+
+@media (max-width: 1075px){
+    .ks_dashboard_header_name {
+        max-width: 100%;
+    }
+    .ks_dashboard_top_menu{
+
+      margin-top: 10px;
+    }
+}
+
+
+.ks_dashboard_link{
+    position: relative;
+    display: flex;
+    align-items: center;
+}
+.ks_date_filter_selection_input{
+    display: flex;
+    flex-direction: row;
+}
+
+.ks_date_selection_box{
+    display: flex;
+    align-items: center;
+}
+.ks_date_filter_dropdown{
+    padding: 0.375rem 0.75rem;
+    border-color: #dee2e6;
+    border-radius: 3px !important;
+}
+#ks_date_filter_selection{
+    font-family: inherit;
+    font-weight: bold;
+    padding: 0px 8px 0px 8px;
+}
+#ks_add_item_selection,#ks_date_selector_container{
+    box-shadow: rgba(0, 0, 0, 0.19) 0px 10px 20px, rgba(0, 0, 0, 0.23) 0px 6px 6px;
+}
+.df_selection_text{
+    display: block;
+    padding: 3px 25px;
+    font-weight: normal;
+    line-height: 1.42857143;
+    white-space: nowrap;
+    cursor: pointer;
+}
+.ks_item_click{
+    cursor:pointer;
+}
+.ks_dashboard_kpi {
+    position : relative;
+    margin-top: 15px;
+    height: auto;
+    border-radius: 6px;
+    transition: all 0.3s cubic-bezier(.25,.8,.25,1);
+    box-shadow: 0 1px 2px rgba(0,0,0,0.12), 0 1px 2px rgba(0,0,0,0.24);
+}
+
+
+
+.ks_dashboard_item_hover:hover .ks_dashboard_item_header_hover > .ks_chart_inner_buttons{
+    visibility: visible;
+}
+.ks_dashboard_item_hover:hover .ks_dashboard_item_header_hover > button {
+    visibility: visible;
+}
+
+.ks_dashboard_item_main_body_l5{
+    width: 100%;
+    text-align: center;
+    padding: 0 30px;
+    display: flex;
+    flex-direction: column;
+}
+
+.ks_kpi_main_body {
+    width: 100%;
+/*
+    height: 67%;
+*/
+}
+.ks_dashboard_kpi_name_preview {
+    font-size: 21px;
+    white-space: nowrap;
+    text-overflow: ellipsis;
+    margin-top: 30px;
+    overflow: hidden;
+}
+
+
+.ks_dashboard_kpi_count_preview {
+    font-weight: bold;
+    width:auto;
+    font-size: x-large;
+    text-align: center;
+    white-space: nowrap;
+    text-overflow: ellipsis;
+    text-transform: none;
+    overflow: hidden;
+}
+.ks_progress progress {
+   background-color: #000;
+   border: 0;
+   width: 80%;
+   height: 5px;
+   border-radius: 9px;
+}
+.ks_progress progress::-webkit-progress-bar {
+   background-color: #000;
+   border-radius: 9px;
+}
+.ks_progress progress::progress-value {
+   background: #fff;
+   border-radius: 9px;
+}
+.ks_progress progress::progress-bar {
+   background: #fff;
+   border-radius: 9px;
+}

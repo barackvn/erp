@@ -58,9 +58,10 @@ class TenancyDetail(models.AbstractModel):
             'get_details': detail_res,
         }
         docargs['data'].update({
-            'end_date': datetime.strftime(
-                docargs.get('data').get('end_date'), DF),
-            'start_date': datetime.strftime(
-                docargs.get('data').get('start_date'), DF)})
+            'end_date': datetime.strptime(
+                docargs.get('data').get('end_date'), DF).date(),
+            'start_date': datetime.strptime(
+                docargs.get('data').get('start_date'), DF).date()
+            })
         return self.env['report'].render(
             'property_management.report_tenancy_by_property', docargs)

@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+  <template id="assets_backend" name="property_management assets_backend" inherit_id="web.assets_backend">
+    <xpath expr="." position="inside">
+      <link rel="stylesheet" href="/property_management/static/src/css/property_management.css" />
+      <script type="text/javascript" src="/property_management/static/src/js/property_management.js"></script>
+      <script type="text/javascript" src="/property_management/static/src/js/chart.js"></script>
+    </xpath>
+  </template>
+</odoo>
