@@ -81,7 +81,7 @@ class AccountAsset(models.Model):
         help="When an asset is created, the status is 'Draft'.\n"
             "If the asset is confirmed, the status goes in 'Running' and the depreciation lines can be posted in the accounting.\n"
             "You can manually close an asset when the depreciation is over. If the last line of depreciation is posted, the asset automatically goes in that status.")
-    
+
 
     date_start = fields.Date(string='Fecha inicio', required=True, states={'draft': [('readonly', False)]}, default=fields.Date.context_today)
     is_baja = fields.Boolean(string='Activo de baja')
@@ -109,6 +109,7 @@ class AccountAsset(models.Model):
     num_cuotas = fields.Integer('Nro Cuotas Pactadas')
     monto_contra = fields.Float('Monto Total Contrato De Arrendamiento', digits=(12,2))
 
+    inmueble = fields.Boolean(default=False,string="Inmueble")
 
 
     @api.multi
@@ -162,7 +163,7 @@ class AccountAsset(models.Model):
 
     @api.onchange('date')
     def onchange_date(self):
-        if self.date:          
+        if self.date:
             year = int(str(self.date)[:4])
             mounth = int(str(self.date)[5:7]) +1
             day = int(str(self.date)[8:10])
@@ -205,7 +206,7 @@ class AccountAsset(models.Model):
     @api.multi
     def compute_depreciation_board(self):
         self.ensure_one()
-        
+
 
         posted_depreciation_line_ids = self.depreciation_line_ids.filtered(lambda x: x.move_check).sorted(key=lambda l: l.depreciation_date)
         unposted_depreciation_line_ids = self.depreciation_line_ids.filtered(lambda x: not x.move_check)
@@ -308,7 +309,7 @@ class AccountAsset(models.Model):
 class account_invoice_line(models.Model):
 
     _inherit = 'account.invoice.line'
-    
+
 
     @api.onchange('asset_category_id')
     def onchange_asset_category(self):
@@ -373,7 +374,7 @@ class AccountAssetCategory(models.Model):
         asset_id.year_depreciacion = float(asset_id.method_number)/12.0
         if asset_id.method_number == 0:
             asset_id.percent_depreciacion = 0
-        else:   
+        else:
             asset_id.percent_depreciacion = 100.0 / (float(asset_id.method_number)/12.0)
         return asset_id
 
@@ -429,11 +430,11 @@ class account_asset_retire(models.TransientModel):
         if lineas_asset:
             a= obj_asset.value - lineas_asset.depreciated_value
             b= lineas_asset.depreciated_value
-            
+
         else:
             a= obj_asset.value
             b= 0
-            
+
         obj_asset.valor_retiro= a
         obj_asset.depreciacion_retiro= b
         obj_asset.f_baja= self.date
@@ -442,17 +443,17 @@ class account_asset_retire(models.TransientModel):
         total_a_hijo= 0
         total_b_hijo= 0
         for hijo in self.env['account.asset.asset'].search([('parent_id','=',obj_asset.id)]):
-            
+
             lineas_asset_hijo = self.env['account.asset.depreciation.line'].search([('asset_id','=',hijo.id),('period_id','=',txt_period)])
             a_hijo = b_hijo = None
             if lineas_asset_hijo:
                 a_hijo= hijo.value - lineas_asset_hijo.depreciated_value
                 b_hijo= lineas_asset_hijo.depreciated_value
-                
+
             else:
                 a_hijo= hijo.value
                 b_hijo= 0
-                
+
             hijo.valor_retiro= a_hijo
             hijo.depreciacion_retiro= b_hijo
             hijo.f_baja= self.date
@@ -520,7 +521,7 @@ class account_asset_retire(models.TransientModel):
 
 class account_asset_analisis_wizard(models.Model):
     _name='account.asset.analisis.wizard'
-    
+
     def get_period(self):
         fiscalyear = self.env['main.parameter'].search([])[0].fiscalyear
         year = self.env['account.fiscalyear'].search([('name','=',fiscalyear)],limit=1)
@@ -535,7 +536,7 @@ class account_asset_analisis_wizard(models.Model):
             return periodos
 
     period_id = fields.Many2one('account.period','Periodo',required=True,default=lambda self:self.get_period())
-    
+
     @api.onchange('period_id')
     def onchange_fiscalyear(self):
         fiscalyear = self.env['main.parameter'].search([])[0].fiscalyear
@@ -550,23 +551,23 @@ class account_asset_analisis_wizard(models.Model):
     @api.multi
     def do_rebuild(self):
         fechaini_obj = self.period_id
-    
-        
+
+
         move_obj=self.env['account.asset.analisis.depreciacion']
         filtro = []
         filtro.append( ('periodo','=',fechaini_obj.name) )
-        
-        
+
+
         lstidsmove = move_obj.search( filtro )
-        
+
         if (len(lstidsmove) == 0):
             raise ValidationError('No contiene datos.')
-    
+
         mod_obj = self.env['ir.model.data']
         act_obj = self.env['ir.actions.act_window']
 
-        
-        
+
+
         return {
             'domain' : filtro,
             'type': 'ir.actions.act_window',
@@ -608,7 +609,7 @@ class account_asset_analisis_depreciacion_asiento(models.Model):
 
     @api.model_cr
     def init(self):
-        self.env.cr.execute(""" 
+        self.env.cr.execute("""
             DROP VIEW IF EXISTS account_asset_analisis_depreciacion_asiento;
             create or replace view account_asset_analisis_depreciacion_asiento as (
 
@@ -622,7 +623,7 @@ left join account_account aa_gasto on aa_gasto.id = aac.account_depreciation_exp
 left join account_account aa_depreciacion on aa_depreciacion.id = aac.account_depreciation_id
 left join account_analytic_account analytic_account on aac.account_analytic_id = analytic_account.id
 --left join account_analytic_plan_instance aapi on aapi.id = aac.account_analytics_id
-where 
+where
 ( CASE WHEN aaa.f_baja is not Null THEN aaa.f_baja >= ap.date_start else True END)
 group by periodo,categoria,cta,cta_analitica, distrib_analitica
 
@@ -637,7 +638,7 @@ left join account_account aa_gasto on aa_gasto.id = aac.account_depreciation_exp
 left join account_account aa_depreciacion on aa_depreciacion.id = aac.account_depreciation_id
 left join account_analytic_account analytic_account on aac.account_analytic_id = analytic_account.id
 --left join account_analytic_plan_instance aapi on aapi.id = aac.account_analytics_id
-where 
+where
 ( CASE WHEN aaa.f_baja is not Null THEN aaa.f_baja >= ap.date_start else True END)
 group by periodo,cta,cta_analitica, distrib_analitica
 
@@ -664,7 +665,7 @@ class account_asset_leasing(models.Model):
 
     @api.model_cr
     def init(self):
-        self.env.cr.execute(""" 
+        self.env.cr.execute("""
             DROP VIEW IF EXISTS account_asset_leasing;
             create or replace view account_asset_leasing as (
 
@@ -680,7 +681,7 @@ order by aaa.name, aac.name
 
 class account_asset_analisis_asiento_wizard(models.Model):
     _name='account.asset.analisis.asiento.wizard'
-    
+
     def get_period(self):
         fiscalyear = self.env['main.parameter'].search([])[0].fiscalyear
         year = self.env['account.fiscalyear'].search([('name','=',fiscalyear)],limit=1)
@@ -696,7 +697,7 @@ class account_asset_analisis_asiento_wizard(models.Model):
 
     period_id = fields.Many2one('account.period','Periodo',required=True,default=lambda self:self.get_period())
     journal_id = fields.Many2one('account.journal','Diario',required=True)
-    
+
     @api.onchange('period_id')
     def onchange_fiscalyear(self):
         fiscalyear = self.env['main.parameter'].search([])[0].fiscalyear
@@ -712,7 +713,7 @@ class account_asset_analisis_asiento_wizard(models.Model):
     def do_rebuild(self):
         fechaini_obj = self.period_id
         journal_obj = self.journal_id
-        
+
         for w in self.env['account.move'].search([('fecha_contable','=',fechaini_obj.date_stop),('check_depreciation_activo','=',True)]):
             if w.state=='posted':
                 w.button_cancel()
@@ -721,15 +722,15 @@ class account_asset_analisis_asiento_wizard(models.Model):
         move_obj=self.env['account.asset.analisis.depreciacion.asiento']
         filtro = []
         filtro.append( ('periodo','=',fechaini_obj.id) )
-        
+
 
         print fechaini_obj.id,'wtf', move_obj
-        
+
         lstidsmove = move_obj.search( filtro )
-        
+
         if (len(lstidsmove) == 0):
             raise ValidationError('No contiene datos.')
-    
+
         vals={
             'journal_id':journal_obj.id,
             'date':fechaini_obj.date_stop,
@@ -737,7 +738,7 @@ class account_asset_analisis_asiento_wizard(models.Model):
             'ref':'DEPRECIACION DE '+ fechaini_obj.code,
         }
         t_move = self.env['account.move'].create(vals)
-        
+
         for i in lstidsmove:
             vals_line = {
                 'name': 'DEPRECIACION DE '+ i.categoria + fechaini_obj.code,
@@ -758,12 +759,12 @@ class account_asset_analisis_asiento_wizard(models.Model):
             obj_real = self.env['account.asset.depreciation.line'].search([('id','=',j.aadl_id)])[0]
             obj_real.move_id = t_move.id
             obj_real.write({'move_id':t_move.id})
-            
+
         rep = "Asiento Creado Exitosamente."
 
         warning_mess = {
             'title': _('Asiento Creado'),
-            'message' : _('Se creo exitosamente el asiento.') 
+            'message' : _('Se creo exitosamente el asiento.')
         }
         return {
             'name':'Exitoso',
@@ -780,8 +781,8 @@ class account_asset_analisis_asiento_wizard(models.Model):
 
 class account_asset_formato_74(models.Model):
     _name='account.asset.formato.74'
-    
-    period_id = fields.Many2one('account.fiscalyear','Año fiscal',required=True)    
+
+    period_id = fields.Many2one('account.fiscalyear','Año fiscal',required=True)
     date = fields.Date('Fecha',required=True)
     tipo = fields.Selection([('pdf', 'Pdf'),('excel', 'Excel')],string='Tipo', required=True)
 
@@ -803,7 +804,7 @@ class account_asset_formato_74(models.Model):
     @api.multi
     def do_rebuild(self):
         fechaini_obj = self.date
-        periodo = self.env['account.period'].search([('code','=',self.date.split('-')[1] +'/'+self.date.split('-')[0])]) 
+        periodo = self.env['account.period'].search([('code','=',self.date.split('-')[1] +'/'+self.date.split('-')[0])])
         if self.date == periodo.date_stop:
             pass
         else:
@@ -825,14 +826,14 @@ class account_asset_formato_74(models.Model):
             fechaini_obj = periodo.date_stop
 
 
-           
+
         move_obj=self.env['account.asset.asset']
         filtro = []
         filtro.append( ('date','<=',str(fechaini_obj) ) )
         filtro.append( ('f_contra','!=',False ) )
-        
+
         lstidsmove = move_obj.search( filtro )
-            
+
         mod_obj = self.env['ir.model.data']
         act_obj = self.env['ir.actions.act_window']
 
@@ -861,8 +862,8 @@ class account_asset_formato_74(models.Model):
             bord = workbook.add_format()
             bord.set_border(style=1)
             numberdos.set_border(style=1)
-            numbertres.set_border(style=1)          
-            x= 7                
+            numbertres.set_border(style=1)
+            x= 7
             tam_col = [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0]
             tam_letra = 1.2
             import sys
@@ -878,7 +879,7 @@ class account_asset_formato_74(models.Model):
 
             worksheet.write(2,1, str(self.period_id.name), normal)
             tam_col[1] = tam_letra* len(str(self.period_id.name)) if tam_letra* len(str(self.period_id.name))> tam_col[1] else tam_col[1]
-            
+
 
             company = self.env['res.company'].search([])[0]
 
@@ -887,7 +888,7 @@ class account_asset_formato_74(models.Model):
 
             worksheet.write(3,1, str(company.partner_id.nro_documento), normal)
             tam_col[1] = tam_letra* len(str(company.partner_id.nro_documento)) if tam_letra* len(str(company.partner_id.nro_documento))> tam_col[1] else tam_col[1]
-            
+
 
 
 
@@ -896,7 +897,7 @@ class account_asset_formato_74(models.Model):
 
             worksheet.write(4,1, str(company.partner_id.name), normal)
             tam_col[1] = tam_letra* len(str(company.partner_id.name)) if tam_letra* len(str(company.partner_id.name))> tam_col[1] else tam_col[1]
-            
+
 
             worksheet.write(6,0, "ACTIVO FIJO",boldbord)
             tam_col[0] = tam_letra* len("ACTIVO FIJO") if tam_letra* len("ACTIVO FIJO")> tam_col[0] else tam_col[0]
@@ -910,7 +911,7 @@ class account_asset_formato_74(models.Model):
             tam_col[4] = tam_letra* len(u"NUMERO DE CUOTAS PACTADAS") if tam_letra* len(u"NUMERO DE CUOTAS PACTADAS")> tam_col[4] else tam_col[4]
             worksheet.write(6,5, "MONTO DEL CONTRATO",boldbord)
             tam_col[5] = tam_letra* len("MONTO DEL CONTRATO") if tam_letra* len("MONTO DEL CONTRATO")> tam_col[5] else tam_col[5]
-            
+
 
 
             for line in lstidsmove:
@@ -920,7 +921,7 @@ class account_asset_formato_74(models.Model):
                 worksheet.write(x,3,line.f_ini_arren if line.f_ini_arren  else '',bord)
                 worksheet.write(x,4,line.num_cuotas,bord)
                 worksheet.write(x,5,line.monto_contra ,numberdos)
-                
+
 
                 tam_col[0] = tam_letra* len(line.name if line.name else '' ) if tam_letra* len(line.name if line.name else '' )> tam_col[0] else tam_col[0]
                 tam_col[1] = tam_letra* len(line.f_contra if line.f_contra  else '') if tam_letra* len(line.f_contra if line.f_contra  else '')> tam_col[1] else tam_col[1]
@@ -928,7 +929,7 @@ class account_asset_formato_74(models.Model):
                 tam_col[3] = tam_letra* len(line.f_ini_arren if line.f_ini_arren  else '') if tam_letra* len(line.f_ini_arren if line.f_ini_arren  else '')> tam_col[3] else tam_col[3]
                 tam_col[4] = tam_letra* len(str(line.num_cuotas) if line.num_cuotas  else '') if tam_letra* len(str(line.num_cuotas) if line.num_cuotas  else '')> tam_col[4] else tam_col[4]
                 tam_col[5] = tam_letra* len("%0.2f"%line.monto_contra ) if tam_letra* len("%0.2f"%line.monto_contra )> tam_col[5] else tam_col[5]
-                
+
                 x = x +1
 
 
@@ -940,14 +941,14 @@ class account_asset_formato_74(models.Model):
             worksheet.set_column('E:E', tam_col[4])
             worksheet.set_column('F:F', tam_col[5])
             workbook.close()
-            
+
             f = open(direccion + 'tempo_activo_74.xlsx', 'rb')
-            
-            
+
+
             sfs_obj = self.pool.get('account_contable_book_it.sunat_file_save')
             vals = {
                 'output_name': 'ActivoFormato7_4.xlsx',
-                'output_file': base64.encodestring(''.join(f.readlines())),     
+                'output_file': base64.encodestring(''.join(f.readlines())),
             }
 
             mod_obj = self.env['ir.model.data']
@@ -967,7 +968,7 @@ class account_asset_formato_74(models.Model):
 
         if self.tipo == 'pdf':
             self.reporteador()
-            
+
             import sys
             reload(sys)
             sys.setdefaultencoding('iso-8859-1')
@@ -978,7 +979,7 @@ class account_asset_formato_74(models.Model):
             direccion = self.env['main.parameter'].search([])[0].dir_create_file
             vals = {
                 'output_name': 'ActivoFormato7_4.pdf',
-                'output_file': open(direccion + "a.pdf", "rb").read().encode("base64"), 
+                'output_file': open(direccion + "a.pdf", "rb").read().encode("base64"),
             }
             sfs_id = self.env['export.file.save'].create(vals)
 
@@ -1043,7 +1044,7 @@ class account_asset_formato_74(models.Model):
             style
         )
         data= [[ paragraph1 , paragraph2 , paragraph3 ,  paragraph4,  paragraph5,paragraph6]]
-        
+
         t=Table(data ,colWidths=(250, 90, 90, 90, 90, 120), rowHeights=(40))
         t.setStyle(TableStyle([
             ('GRID',(0,0),(-1,-1), 1, colors.black),
@@ -1062,7 +1063,7 @@ class account_asset_formato_74(models.Model):
         import sys
         nivel_left_page = 1
         nivel_left_fila = 0
-        
+
         nivel_right_page = 1
         nivel_right_fila = 0
 
@@ -1079,7 +1080,7 @@ class account_asset_formato_74(models.Model):
 
         pagina = 1
         textPos = 0
-        
+
         tamanios = {}
         voucherTamanio = None
         contTamanio = 0
@@ -1094,14 +1095,14 @@ class account_asset_formato_74(models.Model):
         #pagina, pos_inicial = self.verify_linea(c,wReal,hReal,pos_inicial,16,pagina)
 
         fechaini_obj = self.period_id.date_stop
-    
-        
+
+
         move_obj=self.env['account.asset.asset']
         filtro = []
         filtro.append( ('date','<=',str(fechaini_obj) ) )
         filtro.append( ('f_contra','!=',False ) )
-        
-        
+
+
         lstidsmove = move_obj.search( filtro )
         total = 0
         for line in lstidsmove:
@@ -1111,7 +1112,7 @@ class account_asset_formato_74(models.Model):
             c.drawString(375,pos_inicial, line.num_contra if line.num_contra  else '')
             c.drawString(465,pos_inicial, line.f_ini_arren if line.f_ini_arren  else '')
             c.drawString(555,pos_inicial, str(line.num_cuotas) )
-            c.drawRightString(645+110,pos_inicial, '{:,.2f}'.format(decimal.Decimal ("%0.2f"%line.monto_contra)))           
+            c.drawRightString(645+110,pos_inicial, '{:,.2f}'.format(decimal.Decimal ("%0.2f"%line.monto_contra)))
             total += line.monto_contra
             pagina, pos_inicial = self.verify_linea(c,wReal,hReal,pos_inicial,15,pagina)
 
@@ -1176,11 +1177,11 @@ class account_asset_formato_74(models.Model):
 
 class account_asset_formato_71(models.Model):
     _name='account.asset.formato.71'
-    
+
     period_id = fields.Many2one('account.fiscalyear','Año fiscal',required=True)
     date = fields.Date('Fecha',required=True)
     tipo = fields.Selection([('pdf', 'Pdf'),('excel', 'Excel')],string='Tipo', required=True)
-    
+
     global_controler = True
     save_page_states = []
 
@@ -1196,7 +1197,7 @@ class account_asset_formato_71(models.Model):
     @api.multi
     def do_rebuild(self):
         fechaini_obj = self.date
-        periodo = self.env['account.period'].search([('code','=',self.date.split('-')[1] +'/'+self.date.split('-')[0])]) 
+        periodo = self.env['account.period'].search([('code','=',self.date.split('-')[1] +'/'+self.date.split('-')[0])])
         if self.date == periodo.date_stop:
             pass
         else:
@@ -1218,14 +1219,14 @@ class account_asset_formato_71(models.Model):
             fechaini_obj = periodo.date_stop
 
 
-           
+
         move_obj=self.env['account.asset.asset']
         filtro = []
         filtro.append( ('date','<=',str(fechaini_obj) ) )
         filtro.append( ('parent_id','=',False) )
-        
+
         lstidsmove = move_obj.search( filtro )
-        
+
         mod_obj = self.env['ir.model.data']
         act_obj = self.env['ir.actions.act_window']
 
@@ -1254,8 +1255,8 @@ class account_asset_formato_71(models.Model):
             bord = workbook.add_format()
             bord.set_border(style=1)
             numberdos.set_border(style=1)
-            numbertres.set_border(style=1)          
-            x= 8                
+            numbertres.set_border(style=1)
+            x= 8
             tam_col = [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0]
             tam_letra = 1.2
             import sys
@@ -1271,7 +1272,7 @@ class account_asset_formato_71(models.Model):
 
             worksheet.write(2,3, str(self.period_id.name), normal)
             tam_col[1] = tam_letra* len(str(self.period_id.name)) if tam_letra* len(str(self.period_id.name))> tam_col[1] else tam_col[1]
-            
+
 
             company = self.env['res.company'].search([])[0]
 
@@ -1280,7 +1281,7 @@ class account_asset_formato_71(models.Model):
 
             worksheet.write(3,3, str(company.partner_id.nro_documento), normal)
             tam_col[1] = tam_letra* len(str(company.partner_id.nro_documento)) if tam_letra* len(str(company.partner_id.nro_documento))> tam_col[1] else tam_col[1]
-            
+
 
 
 
@@ -1289,7 +1290,7 @@ class account_asset_formato_71(models.Model):
 
             worksheet.write(4,3, str(company.partner_id.name), normal)
             tam_col[1] = tam_letra* len(str(company.partner_id.name)) if tam_letra* len(str(company.partner_id.name))> tam_col[1] else tam_col[1]
-            
+
 
             worksheet.merge_range(6,0,7,0, u"Código Relacionado con el Activo Fijo",boldbord)
             tam_col[0] = tam_letra* len(u"Código Relacionado co") if tam_letra* len(u"Código Relacionado co")> tam_col[0] else tam_col[0]
@@ -1303,9 +1304,9 @@ class account_asset_formato_71(models.Model):
             tam_col[4] = tam_letra* len(u"Modelo del Activo Fijo") if tam_letra* len(u"Modelo del Activo Fijo")> tam_col[4] else tam_col[4]
             worksheet.write(7,5, u"Número de Serie y/o Placa del Activo Fijo",boldbord)
             tam_col[5] = tam_letra* len(u"Número de Serie y/o Placa del Activo Fijo") if tam_letra* len(u"Número de Serie y/o Placa del Activo Fijo")> tam_col[5] else tam_col[5]
-            
+
             worksheet.merge_range(6,2,6,5, u"Detalle del Activo Fijo",boldbord)
-            
+
             worksheet.merge_range(6,6,7,6, "Saldo Inicial",boldbord)
             tam_col[6] = tam_letra* len(u"Saldo Inicial") if tam_letra* len(u"Saldo Inicial")> tam_col[0] else tam_col[0]
 
@@ -1321,7 +1322,7 @@ class account_asset_formato_71(models.Model):
             worksheet.merge_range(6,10,7,10, "Otros Ajustes",boldbord)
             tam_col[10] = tam_letra* len(u"Otros Ajustes") if tam_letra* len(u"Otros Ajustes")> tam_col[0] else tam_col[0]
 
-            
+
             worksheet.merge_range(6,11,7,11, u"Valor Histórico del Activo Fijo al 31.12",boldbord)
             tam_col[11] = tam_letra* len(u"Valor Histórico del Act") if tam_letra* len(u"Valor Histórico del Act")> tam_col[0] else tam_col[0]
 
@@ -1387,7 +1388,7 @@ class account_asset_formato_71(models.Model):
                 worksheet.write(x,5,line.serie if line.serie  else '',bord )
 
                 primer_acum_neg = (line.value if line.date < self.period_id.date_start else 0 )
-                primer_acum_neg += (line.value if line.date >= self.period_id.date_start and line.date <= self.period_id.date_stop else 0) 
+                primer_acum_neg += (line.value if line.date >= self.period_id.date_start and line.date <= self.period_id.date_stop else 0)
                 primer_acum_neg += 0#Mejora (line.value if line.date >= self.period_id.date_start  and line.date <= self.period_id.date_stop and line.tipo == 'mejoras' else 0+total[2])
                 primer_acum_neg += 0#Otros(line.value if line.date >= self.period_id.date_start  and line.date <= self.period_id.date_stop and line.tipo == 'otros' else 0+total[4])
 
@@ -1396,9 +1397,9 @@ class account_asset_formato_71(models.Model):
                 worksheet.write(x,8,0, numberdos) #line.value if line.date >= self.period_id.date_start  and line.date <= self.period_id.date_stop and line.tipo == 'mejoras' else 0,numberdos )
                 worksheet.write(x,9, (-primer_acum_neg) if line.f_baja and line.f_baja >= fechaini_obj else 0,numberdos )
                 worksheet.write(x,10,0,numberdos) #line.value if line.date >= self.period_id.date_start  and line.date <= self.period_id.date_stop and line.tipo == 'otros' else 0,numberdos )
-                
+
                 primer_acum = (line.value if line.date < self.period_id.date_start else 0 )
-                primer_acum += (line.value if line.date >= self.period_id.date_start and line.date <= self.period_id.date_stop  else 0) 
+                primer_acum += (line.value if line.date >= self.period_id.date_start and line.date <= self.period_id.date_stop  else 0)
                 primer_acum += 0 #(line.value if line.date >= self.period_id.date_start  and line.date <= self.period_id.date_stop and line.tipo == 'mejoras' else 0)
                 primer_acum += (-primer_acum_neg) if line.f_baja and line.f_baja >= fechaini_obj else 0
                 primer_acum += 0 #(line.value if line.date >= self.period_id.date_start  and line.date <= self.period_id.date_stop and line.tipo == 'otros' else 0)
@@ -1414,7 +1415,7 @@ class account_asset_formato_71(models.Model):
                 worksheet.write(x,17,line.autorizacion_depreciacion if line.autorizacion_depreciacion else '',bord )
                 worksheet.write(x,18,line.category_id.percent_depreciacion,numberdos )
                 #worksheet.write(x,18,-line.depreciacion_retiro+total[6],numberdos )
-                
+
                 acum_anterior = 0
                 for ii in line.depreciation_line_ids:
                     if ii.depreciation_date < self.period_id.date_start:
@@ -1429,7 +1430,7 @@ class account_asset_formato_71(models.Model):
 
                 worksheet.write(x,20,acum_actual ,numberdos)
 
-                total_ultimo = acum_anterior 
+                total_ultimo = acum_anterior
                 total_ultimo += acum_actual
                 total_ultimo += 0 #acum_actual+total[10] if line.tipo=='otros' else 0+total[10]
 
@@ -1472,14 +1473,14 @@ class account_asset_formato_71(models.Model):
             worksheet.set_column(24,24, tam_col[24])
             worksheet.set_column(25,25, tam_col[25])
             workbook.close()
-            
+
             f = open(direccion + 'tempo_activo_71.xlsx', 'rb')
-            
-            
+
+
             sfs_obj = self.pool.get('account_contable_book_it.sunat_file_save')
             vals = {
                 'output_name': 'ActivoFormato7_1.xlsx',
-                'output_file': base64.encodestring(''.join(f.readlines())),     
+                'output_file': base64.encodestring(''.join(f.readlines())),
             }
 
             mod_obj = self.env['ir.model.data']
@@ -1498,7 +1499,7 @@ class account_asset_formato_71(models.Model):
 
         if self.tipo == 'pdf':
             self.reporteador()
-            
+
             import sys
             reload(sys)
             sys.setdefaultencoding('iso-8859-1')
@@ -1509,7 +1510,7 @@ class account_asset_formato_71(models.Model):
             direccion = self.env['main.parameter'].search([])[0].dir_create_file
             vals = {
                 'output_name': 'ActivoFormato7_1.pdf',
-                'output_file': open(direccion + "a.pdf", "rb").read().encode("base64"), 
+                'output_file': open(direccion + "a.pdf", "rb").read().encode("base64"),
             }
             sfs_id = self.env['export.file.save'].create(vals)
 
@@ -1661,13 +1662,13 @@ class account_asset_formato_71(models.Model):
             "<font size=5><b>DEPRECIACION ACUMULADA AJUSTADA POR INFLACION</b></font>",
             style
         )
-        #paragraph18,'' ,          paragraph21,  paragraph22, paragraph23, paragraph24, paragraph25 , paragraph26 ,paragraph27 ,paragraph28  
-        #,paragraph19 , paragraph20, ''          ,  ''         , ''           , ''       ,  ''         , ''        ,  ''        ,   ''    
-        
+        #paragraph18,'' ,          paragraph21,  paragraph22, paragraph23, paragraph24, paragraph25 , paragraph26 ,paragraph27 ,paragraph28
+        #,paragraph19 , paragraph20, ''          ,  ''         , ''           , ''       ,  ''         , ''        ,  ''        ,   ''
+
         if self.global_controler:
             data= [[ paragraph1 , paragraph2 , paragraph3 , '',        '',        '',         paragraph8, paragraph9, paragraph10, paragraph11,  paragraph12, paragraph13, paragraph14, paragraph15, paragraph16, paragraph17  ],
             [        '',          '',          paragraph4,  paragraph5,paragraph6,paragraph7, ''        ,  ''       ,     ''     , ''          ,  ''         ,  ''        , ''         , ''         , ''          , ''       ]]
-            
+
             t=Table(data, colWidths=(50,50,50,50,50,50,50,50,50,50,50,50,50,50,50,50) ,rowHeights=( 13,40))
             t.setStyle(TableStyle([
                 ('SPAN',(0,0),(0,1)),
@@ -1707,7 +1708,7 @@ class account_asset_formato_71(models.Model):
         else:
             data= [[ paragraph1 , paragraph2 , paragraph3 , '',        '',        '',         paragraph18,'' ,          paragraph21,  paragraph22, paragraph23, paragraph24, paragraph25 , paragraph26 ,paragraph27 ,paragraph28],
             [        '',          '',          paragraph4,  paragraph5,paragraph6,paragraph7, paragraph19 , paragraph20, ''          ,  ''         , ''           , ''       ,  ''         , ''        ,  ''        ,   '' ]]
-            
+
             t=Table(data, colWidths=(50,50,50,50,50,50,50,50,50,50,50,50,50,50,50,50) ,rowHeights=( 23,40))
             t.setStyle(TableStyle([
                 ('SPAN',(0,0),(0,1)),
@@ -1751,7 +1752,7 @@ class account_asset_formato_71(models.Model):
         import sys
         nivel_left_page = 1
         nivel_left_fila = 0
-        
+
         nivel_right_page = 1
         nivel_right_fila = 0
 
@@ -1768,7 +1769,7 @@ class account_asset_formato_71(models.Model):
 
         pagina = 1
         textPos = 0
-        
+
         tamanios = {}
         voucherTamanio = None
         contTamanio = 0
@@ -1780,9 +1781,9 @@ class account_asset_formato_71(models.Model):
         #c.drawCentredString(421,25,'Pág. ' + str(pagina))
 
         #datos a consultar
-        
+
         fechaini_obj = self.date
-        periodo = self.env['account.period'].search([('code','=',self.date.split('-')[1] +'/'+self.date.split('-')[0])]) 
+        periodo = self.env['account.period'].search([('code','=',self.date.split('-')[1] +'/'+self.date.split('-')[0])])
         if self.date == periodo.date_stop:
             pass
         else:
@@ -1804,13 +1805,13 @@ class account_asset_formato_71(models.Model):
             fechaini_obj = periodo.date_stop
 
 
-    
-        
+
+
         move_obj=self.env['account.asset.asset']
         filtro = []
         filtro.append( ('date','<=',str(fechaini_obj) ) )
         filtro.append( ('parent_id','=',False ) )
-        
+
         lstidsmove = move_obj.search( filtro )
 
 
@@ -1833,7 +1834,7 @@ class account_asset_formato_71(models.Model):
 
 
             primer_acum_neg = (line.value if line.date < self.period_id.date_start else 0 )
-            primer_acum_neg += (line.value if line.date >= self.period_id.date_start and line.date <= self.period_id.date_stop else 0) 
+            primer_acum_neg += (line.value if line.date >= self.period_id.date_start and line.date <= self.period_id.date_stop else 0)
             primer_acum_neg += 0# (line.value+total[2] if line.date >= self.period_id.date_start  and line.date <= self.period_id.date_stop and line.tipo == 'mejoras' else 0+total[2])
             primer_acum_neg += 0# (line.value+total[4] if line.date >= self.period_id.date_start  and line.date <= self.period_id.date_stop and line.tipo == 'otros' else 0+total[4])
 
@@ -1843,9 +1844,9 @@ class account_asset_formato_71(models.Model):
             c.drawRightString(515-3,pos_inicial, '{:,.2f}'.format(decimal.Decimal("%0.2f"%( (-primer_acum_neg) if line.f_baja and line.f_baja >= fechaini_obj else 0 ))))
 
             c.drawRightString(565-3,pos_inicial, '0.00')
-            
+
             primer_acum = (line.value if line.date < self.period_id.date_start else 0 )
-            primer_acum += (line.value if line.date >= self.period_id.date_start and line.date <= self.period_id.date_stop  else 0) 
+            primer_acum += (line.value if line.date >= self.period_id.date_start and line.date <= self.period_id.date_stop  else 0)
             primer_acum += 0# (line.value+total[2] if line.date >= self.period_id.date_start  and line.date <= self.period_id.date_stop and line.tipo == 'mejoras' else 0+total[2])
             primer_acum +=  (-primer_acum_neg+total[3]) if line.f_baja and line.f_baja >= fechaini_obj else 0
             primer_acum += 0#(line.value+total[4] if line.date >= self.period_id.date_start  and line.date <= self.period_id.date_stop and line.tipo == 'otros' else 0+total[4])
@@ -1860,7 +1861,7 @@ class account_asset_formato_71(models.Model):
             aa+=line.value if line.date < self.period_id.date_start else 0
             bb+=line.value if line.date >= self.period_id.date_start and line.date <= self.period_id.date_stop  else 0
             cc+=0 #line.value+total[2] if line.date >= self.period_id.date_start  and line.date <= self.period_id.date_stop and line.tipo == 'mejoras' else 0+total[2]
-            dd+= (-primer_acum_neg) if line.f_baja and line.f_baja >= fechaini_obj else 0 
+            dd+= (-primer_acum_neg) if line.f_baja and line.f_baja >= fechaini_obj else 0
             ee+= 0 #line.value+total[4] if line.date >= self.period_id.date_start  and line.date <= self.period_id.date_stop and line.tipo == 'otros' else 0+total[4]
             ff+=primer_acum
 
@@ -1884,7 +1885,7 @@ class account_asset_formato_71(models.Model):
 
         pagina = 1
         textPos = 0
-        
+
         tamanios = {}
         voucherTamanio = None
         contTamanio = 0
@@ -1898,8 +1899,8 @@ class account_asset_formato_71(models.Model):
 
         #datos a consultar
         fechaini_obj = self.period_period_id.date_stop
-    
-        
+
+
         move_obj=self.env['account.asset.asset']
         filtro = []
         filtro.append( ('date','<=',str(fechaini_obj) ) )
@@ -1942,7 +1943,7 @@ class account_asset_formato_71(models.Model):
             c.drawRightString(565-3,pos_inicial, '{:,.2f}'.format(decimal.Decimal("%0.2f"%(acum_actual) )))
 
 
-            total_ultimo = acum_anterior 
+            total_ultimo = acum_anterior
             total_ultimo += acum_actual
             total_ultimo += 0 #acum_actual+total[10] if line.tipo=='otros' else 0+total[10]
 
@@ -1962,7 +1963,7 @@ class account_asset_formato_71(models.Model):
             ee+=0 #acum_actual+total[10] if line.tipo=='otros' else 0+total[10]
             ff+=acum_anterior+acum_actual+ ( ((-total_ultimo) if total_ultimo!= 0 else 0 ) if line.f_baja and line.f_baja >= fechaini_obj else 0 )
 
-                
+
 
 
         c.setFont("Times-Bold", 5)
@@ -2047,7 +2048,7 @@ class account_asset_analisis_depreciacion(models.Model):
 
     @api.model_cr
     def init(self):
-        self.env.cr.execute(""" 
+        self.env.cr.execute("""
             DROP VIEW IF EXISTS account_asset_analisis_depreciacion;
             create or replace view account_asset_analisis_depreciacion as (
 
@@ -2063,10 +2064,9 @@ class account_asset_analisis_depreciacion(models.Model):
             left join account_account aa_depreciacion on aa_depreciacion.id = aac.account_depreciation_id
             left join account_analytic_account analytic_account on aac.account_analytic_id = analytic_account.id
             --left join account_analytic_plan_instance aapi on aapi.id = aac.account_analytics_id
-            where 
+            where
             ( CASE WHEN aaa.f_baja is not Null THEN aaa.f_baja >= ap.date_start else True END)
             order by aaa.id, aadl.sequence ) AS T
 
             )
             """)
-

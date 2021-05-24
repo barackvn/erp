@@ -63,18 +63,19 @@
 								<field name="country_id" placeholder="Country" class="oe_no_button"
 									options='{"no_open": True, "no_create": True}' required="1" />
 							</div>
-							<field name="latitude"/>
-							<field name="longitude"/>
+							<field name="latitude" invisible="True"/>
+							<field name="longitude" invisible="True"/>
 							<field name="age_of_property" />
 							<field name="no_of_towers" attrs="{'invisible':[('parent_id','!=',False)]}" />
 							<field name="floor" attrs="{'invisible':[('parent_id','=',False)]}" />
-							<field name="gfa_feet" />
+							<field name="gfa_feet" invisible="True"/>
 							<field name="gfa_meter" />
 							<field name="unit_price" widget="monetary"
 								options="{'currency_field': 'currency_id'}" />
 							<field name="total_price" widget="monetary"
 								options="{'currency_field': 'currency_id'}" />
 							<field name="active" />
+							<field name="inmueble" />
 							<field name="has_image" invisible="1" />
 						</group>
 						<group>
@@ -145,7 +146,7 @@
 									<button name="create_move"
 										attrs="{'invisible':['|',('move_check','!=',False),('parent_state','!=','draft')]}"
 										icon="fa fa-gear fa-lg" class="fa fa-cog fa-spin fa-3x fa-fw"
-										string="Create Move" type="object"/> 
+										string="Create Move" type="object"/>
 								</tree>
 								<form string="Depreciation Lines">
 									<group>
@@ -714,7 +715,7 @@
 		<field name="view_mode">kanban,tree,form,graph</field>
 		<field name="search_view_id" ref="property_management.view_account_asset_search" />
 		<field name="context">{'search_default_grpstate':1}</field>
-		<field name="domain">[]</field>
+		<field name="domain">[('inmueble','=',True)]</field>
 	</record>
 
 

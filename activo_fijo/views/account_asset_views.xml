@@ -20,11 +20,11 @@
 
                     </field>
 
-               </field> 
+               </field>
 
 
             </field>
-    </record> --> 
+    </record> -->
 
         <record model="ir.ui.view" id="account_asset.view_account_asset_asset_form">
         <field name="name">account.asset.asset.form</field>
@@ -34,7 +34,7 @@
                 <header>
                     <button name="validate" states="draft" string="Confirm" type="object" class="oe_highlight"/>
                     <button type="object" name="compute_depreciation_board" string="Compute Depreciation" states="draft"/>
-                    <button name="set_to_close" states="open" string="Sell or Dispose" type="object" class="oe_highlight"/>                    
+                    <button name="set_to_close" states="open" string="Sell or Dispose" type="object" class="oe_highlight"/>
                     <button name="set_to_draft" string="Set to Draft" type="object" attrs="{'invisible': ['|', ('entry_count', '!=', 0), ('state', '!=', 'open')]}"/>
                     <button name="%(account_asset.action_asset_modify)d" states="open" string="Modify Depreciation" type="action"/>
                     <button name="button_retire" string="Dar de Baja" type="object" attrs="{'invisible': [('f_baja','!=', False)]}" />
@@ -64,8 +64,8 @@
                             <field  name="date_start"/>
                             <field name="currency_id" groups="base.group_multi_currency"/>
                             <field name="company_id" options="{'no_create': True}" groups="base.group_multi_company"/>
-                            
-                            
+
+
                             <field name="invoice_id" string="Invoice" options="{'no_create': True}"/>
                         </group>
                     </group>
@@ -90,7 +90,7 @@
                                     <field name="parent_state" invisible="1"/>
                                     <button name="create_move" type="object" widget="widgetonbutton"/>
                                 </tree>
-                                <form string="Depreciation Lines"> 
+                                <form string="Depreciation Lines">
                                     <group>
                                         <group>
                                             <field name="parent_state" invisible="1"/>
@@ -197,12 +197,12 @@
 
                <field name="account_depreciation_expense_id" position="after">
                         <field  name="account_retire"/>
-               </field> 
+               </field>
 
                <field name="method_time" position="replace">
                     <field name="method_time" string="Time Method Based On" widget="radio" invisible="1"/>
                </field>
-               
+
 
                <xpath expr="//form//group//group[3]" position="replace">
                     <group string="Periodicidad">
@@ -212,10 +212,10 @@
                                     <field name="method_number" string="Número de Periodos de Depreciación" attrs="{'invisible':[('method_time','=','end')], 'required':[('method_time','=','number')]}" readonly="1"/>
                                     <field name="method_end" attrs="{'required': [('method_time','=','end')], 'invisible':[('method_time','=','number')]}"/>
                     </group>
-               </xpath> 
+               </xpath>
 
             </field>
-    </record>   
+    </record>
 
 
 
@@ -226,7 +226,7 @@
         <field name="field_parent">child_ids</field>
         <field name="inherit_id" ref="account_asset.view_account_asset_asset_purchase_tree"/>
         <field name="arch" type="xml">
-        
+
         <xpath expr="//tree" position="replace">
 
             <tree string="Assets" colors="blue:(state == 'draft');grey:(state == 'close')">
@@ -263,9 +263,9 @@
             <field name="partner_id" position="after">
                     <group expand="0" string="Group By">
                         <filter name="id_grupo_asset" string="Padre" context="{'group_by':'id_grupo_asset'}"/>
-                        <filter name="ubicacion" string="Ubicación" context="{'group_by':'ubicacion'}"/>  
-                        <filter name="cta_activo" string="Cta. Activo" context="{'group_by':'cta_activo'}"/>  
-                        <filter name="state" string="Estado" context="{'group_by':'state'}"/>                        
+                        <filter name="ubicacion" string="Ubicación" context="{'group_by':'ubicacion'}"/>
+                        <filter name="cta_activo" string="Cta. Activo" context="{'group_by':'cta_activo'}"/>
+                        <filter name="state" string="Estado" context="{'group_by':'state'}"/>
                     </group>
             </field>
         </field>
@@ -283,8 +283,8 @@
 
                 <xpath expr="//field[@name='invoice_line_ids']/tree/field[@name='account_id']" position="before">
                     <field name="asset_category_id"/>
-                </xpath>                
-                    
+                </xpath>
+
             </field>
         </record>
 
@@ -418,7 +418,7 @@
         <menuitem parent="menu_action_account_asset_libro_padre_wizard" id="menu_action_account_asset_asiento_analisis_wizard" action="account_asset_analisis_asiento_wizard_action"/>
 
 
-        
+
     <record model="ir.ui.view" id="view_account_asset_leasing_tree">
         <field name="name">account.asset.leasing.tree</field>
         <field name="model">account.asset.leasing</field>

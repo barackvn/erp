@@ -185,14 +185,14 @@ class AccountAssetAsset(models.Model):
         self.value_residual = total_residual
 
     @api.one
-    @api.depends('gfa_feet', 'unit_price')
+    @api.depends('gfa_meter', 'unit_price')
     def cal_total_price(self):
         """
         This Method is used to Calculate Total Price.
         @param self: The object pointer
         @return: Calculated Total Price.
         """
-        self.total_price = self.gfa_feet * self.unit_price
+        self.total_price = self.gfa_meter * self.unit_price
 
     image = fields.Binary(
         string='Image')
@@ -224,7 +224,7 @@ class AccountAssetAsset(models.Model):
         help="//www.youtube.com/embed/mwuPTI8AT7M?rel=0")
     unit_price = fields.Float(
         string='Unit Price',
-        help='Unit Price Per Sqft.')
+        help='Unit Price Per meter.')
     ground_rent = fields.Float(
         string='Ground Rent',
         help='Ground rent of Property.')
@@ -278,7 +278,7 @@ class AccountAssetAsset(models.Model):
         string='Total Price',
         compute='cal_total_price',
         help='Total Price of Property, \nTotal Price = Unit Price * \
-        GFA (Sqft).')
+        GFA (m).')
     has_image = fields.Boolean(
         compute='_has_image')
     pur_instl_chck = fields.Boolean(
@@ -520,19 +520,19 @@ class AccountAssetAsset(models.Model):
             meter_val = float(self.gfa_feet / 10.7639104)
         self.gfa_meter = meter_val
 
-    @api.onchange('unit_price', 'gfa_feet')
-    def unit_price_calc(self):
-        """
-        when you change Unit Price and GFA Feet fields value,
-        this method will change Total Price and Purchase Value
-        accordingly.
-        @param self: The object pointer
-        """
-        if self.unit_price and self.gfa_feet:
-            self.total_price = float(self.unit_price * self.gfa_feet)
-            self.value = float(self.unit_price * self.gfa_feet)
-        if self.unit_price and not self.gfa_feet:
-            raise ValidationError(_('Please Insert GFA(Sqft).'))
+    # @api.onchange('unit_price', 'gfa_feet')
+    # def unit_price_calc(self):
+    #     """
+    #     when you change Unit Price and GFA Feet fields value,
+    #     this method will change Total Price and Purchase Value
+    #     accordingly.
+    #     @param self: The object pointer
+    #     """
+    #     if self.unit_price and self.gfa_feet:
+    #         self.total_price = float(self.unit_price * self.gfa_feet)
+    #         self.value = float(self.unit_price * self.gfa_feet)
+    #     if self.unit_price and not self.gfa_feet:
+    #         raise ValidationError(_('Please Insert GFA(Sqft).'))
 
     @api.multi
     def edit_status(self):
