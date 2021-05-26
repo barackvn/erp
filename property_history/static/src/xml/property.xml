@@ -1,0 +1,69 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<templates>
+  <t t-name="PropertyHistoryDashboard">
+    <div class="oh_dashboards">
+      <div class="container-fluid o_property_dashboard"></div>
+    </div>
+  </t>
+  <t t-name="PosOrders">
+    <h1>Dashboard History - Property Management</h1>
+    <div class="bg-white" style="display: flex;width:100%;height:auto;margin-top:10px;padding:15px;margin-top:0px ">
+      <div style="width:60%;display:flex;justify-content: space-between">
+        <span id="ks_dashboard_title_label" class="ks_am_element" style="margin-right:10px">
+          Rango de fechas
+        </span>
+        <input id="date_from" type="date" class="date_filter"/>
+        <input id="date_to" type="date" class="date_filter" t-att-value="date_to"/>
+      </div>
+      <div style="width:40%;display:flex;margin-left:30px">
+        <div id="ks_dashboard_title">
+          <span id="ks_dashboard_title_label" class="ks_am_element" style="margin-right:10px">
+            Frecuencia
+          </span>
+        </div>
+        <div class="ks_dashboard_top_menu ks_select_none">
+          <div class="ks_dashboard_link ks_am_content_element ks_hide mr-4">
+            <div class="ks_date_filter_selection_input">
+              <div class="ks_date_selection_box">
+                <div class="btn-group ">
+                  <button class="o_dropdown_toggler_btn btn btn-secondary dropdown-toggle ks_date_filter_dropdown" data-toggle="dropdown" aria-expanded="false">
+                    <span class="fa fa-lg fa-calendar"/>
+                    <span id="ks_date_filter_selection"/>
+                    <span class="caret"/>
+                  </button>
+
+                  <ul id="ks_date_selector_container" class="dropdown-menu ks_date_filters_menu" role="menu">
+                    <li id="l_none">
+                      <span id="month" class="df_selection_text" focus="1">Mensual</span>
+                      <span id="year" class="df_selection_text" focus="0">Anual</span>
+                    </li>
+                  </ul>
+                </div>
+              </div>
+              <div class="ks_date_input_fields ks_hide"></div>
+            </div>
+          </div>
+        </div>
+
+      </div>
+
+    </div>
+
+    <div class="col-sm-12 col-lg-6  selling_product_graph_view  bg-white" style="width: 100%;padding-left:0px;padding-right:0px;margin-top:15px">
+      <div class="oh-card text-color border">
+        <div class="oh-card-body pb-0">
+        </div>
+        <canvas id="lineChart" class="top_selling_product" width="200" height="120"/>
+      </div>
+    </div>
+
+    <div class="col-sm-12 col-lg-6  selling_product_graph_view  bg-white" style="width: 100%;padding-left:0px;padding-right:0px;margin-top:15px">
+      <div class="oh-card text-color border">
+        <div class="oh-card-body pb-0">
+        </div>
+        <canvas id="barChart" class="render_available_meters_ctx" width="200" height="120"/>
+      </div>
+    </div>
+  </t>
+</templates>
