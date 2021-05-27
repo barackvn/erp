@@ -150,66 +150,120 @@ odoo.define('property_history.action_export', function(require) {
       console.log(date_from)
       var self = this
       var ctx = self.$(".render_available_meters_ctx")[0].getContext('2d')
-      AccountAnalytic.call("get_the_available_meters", [datetype,date_to,date_from]).then(function(arrays) {
+      PropertyHistory.call("get_the_available_meters", [datetype,date_to,date_from]).then(function(arrays) {
         $('#barChart').replaceWith($('<canvas id="barChart" class="render_available_meters_ctx" width="800" height="450"></canvas>'));
-        var data = {
-          labels: arrays[1],
-          datasets: [
-            {
-              label: "Espacio Total",
-              data: arrays[0],
-              borderColor: '#9ad0f5',
-              backgroundColor: '#9ad0f5',
+        if (datetype=="month"){
+          var data = {
+            labels: arrays[1],
+            datasets: [
+              {
+                label: "Espacio Disponible",
+                data: arrays[0],
+                borderColor: '#9ad0f5',
+                backgroundColor: '#9ad0f5',
+              },
+              {
+                label: "Espacio Ocupado",
+                data: arrays[2],
+                borderColor: '#ffe6aa',
+                backgroundColor: '#ffe6aa',
+              },
+            ]
+          };
+          //options
+          var options = {
+            responsive: true,
+            backgroundColor: '#dbf3f3',
+            borderColor: '#4bc0c0',
+            title: {
+              display: true,
+              position: "top",
+              text: "Espacio disponible - Espacio ocupado en m2",
+              fontSize: 18,
+              fontColor: "#111"
             },
-            {
-              label: "Espacio Ocupado",
-              data: arrays[2],
-              borderColor: '#ffe6aa',
-              backgroundColor: '#ffe6aa',
+            legend: {
+              position: "bottom",
+              labels: {
+                fontColor: "#333",
+              }
             },
-          ]
-        };
-        //options
-        var options = {
-          responsive: true,
-          backgroundColor: '#dbf3f3',
-          borderColor: '#4bc0c0',
-          title: {
-            display: true,
-            position: "top",
-            text: "Espacio total - Espacio ocupado en m2",
-            fontSize: 18,
-            fontColor: "#111"
-          },
-          legend: {
-            position: "bottom",
-            labels: {
-              fontColor: "#333",
+            scales: {
+              xAxes: [{
+                ticks: {
+                  min: 0
+                },
+                scaleLabel: {
+                  display: true,
+                  labelString: 'Fecha'
+                }
+              }],
+              yAxes: [{
+                ticks: {
+                  min: 0
+                },
+                scaleLabel: {
+                  display: true,
+                  labelString: 'Metros cuadrados'
+                }
+              }],
             }
-          },
-          scales: {
-            xAxes: [{
-              ticks: {
-                min: 0
+          };
+        }else{
+          var data = {
+            labels: arrays[1],
+            datasets: [
+              {
+                label: "Espacio Ocupado",
+                data: arrays[2],
+                borderColor: '#ffe6aa',
+                backgroundColor: '#ffe6aa',
               },
-              scaleLabel: {
-                display: true,
-                labelString: 'Fecha'
+            ]
+          };
+          //options
+          var options = {
+            responsive: true,
+            backgroundColor: '#dbf3f3',
+            borderColor: '#4bc0c0',
+            title: {
+              display: true,
+              position: "top",
+              text: "Espacio disponible - Espacio ocupado en m2",
+              fontSize: 18,
+              fontColor: "#111"
+            },
+            legend: {
+              position: "bottom",
+              labels: {
+                fontColor: "#333",
               }
-            }],
-            yAxes: [{
-              ticks: {
-                min: 0
-              },
-              scaleLabel: {
-                display: true,
-                labelString: 'Metros cuadrados'
-              }
-            }],
-          }
-        };
-        //create Chart class object
+            },
+            scales: {
+              xAxes: [{
+                ticks: {
+                  min: 0
+                },
+                scaleLabel: {
+                  display: true,
+                  labelString: 'Fecha'
+                }
+              }],
+              yAxes: [{
+                ticks: {
+                  min: 0
+                },
+                scaleLabel: {
+                  display: true,
+                  labelString: 'Metros cuadrados'
+                }
+              }],
+            }
+          };
 
+        }
+
+       //create Chart class object
        new Chart(document.getElementById("barChart"), {
           type: "bar",
           data: data,

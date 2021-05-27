@@ -100,8 +100,15 @@
 
 
 	<!--Property Tenancy Menu -->
+	<menuitem
+		id="menu_property_history"
+		name="Property history"
+		parent="property_management.menu_property_main"
+		sequence="1"
+		/>
 
-	<menuitem name="Property History" id="menu_tenancy" parent="property_management.menu_property_sub"
+
+	<menuitem name="Property History Rent" id="menu_tenancy" parent="menu_property_history"
 		action="property_history.action_property_history_view" groups="base.group_user" sequence="100" />
 
 		<record id="action_history_dashboard" model="ir.actions.client">
@@ -109,6 +116,6 @@
 			<field name="tag">property_history_dashboard</field>
 		</record>
 
-		<menuitem name="Dashboard" id="property_dashboard_history_menuitem" parent="property_management.menu_property_sub"  groups="base.group_user" sequence="125" action="action_history_dashboard"/>
+		<menuitem name="Dashboard" id="property_dashboard_history_menuitem" parent="menu_property_history"  groups="base.group_user" sequence="125" action="action_history_dashboard"/>
 
 </odoo>
