@@ -1,5 +1,10 @@
 # -*- coding: utf-8 -*-
 from odoo import api, fields, models, tools, _
+import calendar
+from datetime import date, datetime
+from openerp.osv import osv
+from math import modf
+from decimal import *
 
 class HrPayslipRun(models.Model):
 
