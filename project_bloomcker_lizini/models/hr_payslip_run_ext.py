@@ -1,5 +1,41 @@
 # -*- coding: utf-8 -*-
 from odoo import api, fields, models, tools, _
+from datetime import date, datetime
+from odoo.exceptions import ValidationError, UserError
+from reportlab.pdfgen import canvas
+from reportlab.lib.units import inch
+from reportlab.lib.colors import magenta, red, black, blue, gray, Color, HexColor
+from reportlab.pdfbase import pdfmetrics
+from reportlab.pdfbase.ttfonts import TTFont
+from reportlab.lib.pagesizes import letter, A4
+from reportlab.platypus import SimpleDocTemplate, Table, TableStyle
+from reportlab.lib import colors
+from reportlab.lib.styles import getSampleStyleSheet
+from reportlab.lib.pagesizes import A4
+from reportlab.platypus import Paragraph, Table, PageBreak
+from reportlab.lib.units import cm, mm
+from reportlab.lib.utils import simpleSplit
+from cgi import escape
+import base64
+import io
+from xlsxwriter.workbook import Workbook
+import sys
+reload(sys)
+sys.setdefaultencoding('iso-8859-1')
+import os
+import copy
+from reportlab.lib import colors
+from reportlab.lib.pagesizes import A4, inch, landscape
+from reportlab.platypus import SimpleDocTemplate, Table, TableStyle, Paragraph
+from reportlab.lib.styles import getSampleStyleSheet
+import StringIO
+import time
+from reportlab.lib.enums import TA_JUSTIFY, TA_CENTER, TA_RIGHT, TA_LEFT
+from reportlab.lib.pagesizes import letter
+from reportlab.platypus import SimpleDocTemplate, Paragraph, Spacer, Image
+from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
+from reportlab.lib.units import inch
+
 import calendar
 from datetime import date, datetime
 from openerp.osv import osv
