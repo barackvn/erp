@@ -63,7 +63,7 @@ class HrPayslipRun(models.Model):
 		workbook = Workbook(direccion + 'planilla_afp_net.xls')
 
 		for record in self:
-			
+
 			planilla_ajustes = record.env['planilla.ajustes'].search([], limit=1)
 
 			for payslip_run in record.browse(record.ids):
@@ -620,7 +620,7 @@ class HrPayslipRun(models.Model):
 			"res_id": sfs_id.id,
 			"target": "new",
 		}
-	
+
 	def regulariza_dias_laborados(self):
 		planilla_ajustes = self.env['planilla.ajustes'].get_parametros_ajustes()
 		DLAB = planilla_ajustes.cod_dias_laborados
@@ -657,3 +657,151 @@ class HrPayslipRun(models.Model):
 				dias_laborados.number_of_days += -i.number_of_days
 
 		return self.env['planilla.warning'].info(title='Resultado de generacion', message="SE GENERO DE MANERA EXITOSA!")
+
+	@api.multi
+	def _wizard_generar_asiento_contable(self):
+
+		total_debe = 0
+		total_haber = 0
+
+		for record in self:
+
+			query_vista = """
+				select * from (
+					select
+					a6.date_end as fecha_fin,
+					'ASIENTO DISTRIBUIDO DE LA PLANILLA DEL MES':: TEXT as concepto,
+					a7.id as cuenta_debe,
+					a10.id::integer as cuenta_analitica_id,
+					round(sum(a1.amount*(a9.porcentaje/100))::numeric,2) as debe,
+					0 as haber,
+					''::text as nro_documento,
+					0 as partner_id
+					from hr_payslip_line a1
+					left join hr_payslip a2 on a2.id=a1.slip_id
+					left join hr_contract a3 on a3.id=a1.contract_id
+					left join hr_employee a4 on a4.id=a1.employee_id
+					left join hr_salary_rule a5 on a5.id=a1.salary_rule_id
+					left join hr_payslip_run a6 on a6.id=a2.payslip_run_id
+					left join account_account a7 on a7.id=a5.account_debit
+					left join planilla_distribucion_analitica a8 on a8.id=a3.distribucion_analitica_id
+					left join planilla_distribucion_analitica_lines a9 on a9.distribucion_analitica_id=a8.id
+					left join account_analytic_account a10 on a10.id=a9.cuenta_analitica_id
+					where a7.code is not null and a1.amount<>0 and a6.date_start='%s' and a6.date_end='%s'
+					group by a6.date_end,a7.id,a10.id
+					order by a7.code)tt
+				union all
+				select * from (
+					select
+					a6.date_end as fecha_fin,
+					a5.name as concepto,
+					a7.id as cuenta_haber,
+					0::integer as cuenta_analitica_id,
+					0 as debe,
+					round(sum((a1.amount))::numeric,2) as haber,
+					''::text as nro_documento,
+					0 as partner_id
+					from hr_payslip_line a1
+					left join hr_payslip a2 on a2.id=a1.slip_id
+					left join hr_contract a3 on a3.id=a1.contract_id
+					left join hr_employee a4 on a4.id=a1.employee_id
+					left join hr_salary_rule a5 on a5.id=a1.salary_rule_id
+					left join hr_payslip_run a6 on a6.id=a2.payslip_run_id
+					left join account_account a7 on a7.id=a5.account_credit
+					where a7.code is not null and a6.date_start='%s' and a6.date_end='%s'
+						and a1.code not in ('COMFI','COMMIX','SEGI','A_JUB')
+						and a7.code not like '%s'
+					group by a6.date_end,a6.name,a5.name,a7.id,a7.code
+					having sum(a1.amount)<>0
+					order by a7.code)tt
+				union all
+				select * from (
+					select
+					hpr.date_end as fecha_fin,
+					pa.entidad||' - '||hpl.code as concepto,
+					pa.account_id as cuenta_haber,
+					0::integer as cuenta_analitica_id,
+					0 as debe,
+					round(sum((hpl.amount))::numeric,2) as haber,
+					''::text as nro_documento,
+					0 as partner_id
+					from hr_payslip_line hpl
+					inner join hr_payslip hp on hp.id = hpl.slip_id
+					inner join hr_contract hc on hc.id = hp.contract_id
+					inner join planilla_afiliacion pa on pa.id = hc.afiliacion_id
+					inner join hr_payslip_run hpr on hpr.id = hp.payslip_run_id
+					inner join hr_salary_rule hsr on hsr.id = hpl.salary_rule_id
+					where pa.account_id is not null and hpr.date_start='%s' and hpr.date_end='%s'
+						and hpl.code in ('COMFI','COMMIX','SEGI','A_JUB')
+					group by hpr.date_end,hpr.name,pa.entidad,pa.account_id,hpl.code
+					having sum(hpl.amount)<>0
+				)ttt
+				union all
+				select * from (
+					select
+					min(a6.date_end) as fecha_fin,
+					min(a5.name) as concepto,
+					min(a7.id) as cuenta_haber,
+					0::integer as cuenta_analitica_id,
+					0 as debe,
+					round(sum((a1.amount))::numeric,2) as haber,
+					coalesce(rp.nro_documento,'')::text as nro_documento,
+					coalesce(rp.id,0) as partner_id
+					from hr_payslip_line a1
+					left join hr_payslip a2 on a2.id=a1.slip_id
+					left join hr_contract a3 on a3.id=a1.contract_id
+					left join hr_employee a4 on a4.id=a1.employee_id
+					left join res_partner rp on rp.id = a4.address_home_id
+					left join hr_salary_rule a5 on a5.id=a1.salary_rule_id
+					left join hr_payslip_run a6 on a6.id=a2.payslip_run_id
+					left join account_account a7 on a7.id=a5.account_credit
+					where a7.code is not null and a6.date_start= '%s' and a6.date_end= '%s'
+						and a1.code not in ('COMFI','COMMIX','SEGI','A_JUB')
+						and a7.code like '%s'
+					group by rp.id,rp.nro_documento,a7.code
+					having sum(a1.amount)<>0
+					order by a7.code)tt
+						""" % (record.date_start, record.date_end,
+							record.date_start, record.date_end, '41%',
+							record.date_start, record.date_end,
+							record.date_start, record.date_end, '41%')
+			record.env.cr.execute(query_vista)
+
+			res = record.env.cr.dictfetchall()
+
+			for x in res:
+				try:
+					total_debe += x['debe']
+				except:
+					total_debe += 0
+			for x in res:
+				try:
+					total_haber += x['haber']
+				except:
+					total_haber += 0
+
+		var = total_debe-total_haber
+
+		vals = {
+			'total_debe': total_debe,
+			'total_haber': total_haber,
+			'diferencia': var
+		}
+
+		sfs_id = record.env['planilla.asiento.contable'].create(vals)
+
+		return {
+			'name': 'Asiento Contable',
+			"type": "ir.actions.act_window",
+			"res_model": "planilla.asiento.contable",
+			'view_type': 'form',
+			'view_mode': 'form',
+			"views": [[False, "form"]],
+			"res_id": sfs_id.id,
+			"target": "new",
+			'context': {'current_id': self[0].id, 'account_move_lines': res}
+		}
+
+	@api.multi
+	def generar_planilla_tabular(self):
+		return self[0].env['planilla.planilla.tabular.wizard'].create({'fecha_ini': self[0].date_start, 'fecha_fin': self[-1].date_end}).do_rebuild()
