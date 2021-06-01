@@ -4,7 +4,7 @@ from odoo import api, fields, models, tools, _
 from odoo.exceptions import UserError, ValidationError
 
 class Employee_schedule_ext(models.Model):
-    
+
     _inherit='hr.employee'
 
     hora_ent_fija = fields.Datetime('Hora de Entrada', default=datetime.strptime("12:00:00", "%X").time())
@@ -27,7 +27,7 @@ class Interconetion_payslip_ext(models.Model):
         horas_ext=0
         horas_trabajadas=0
         faltas=6
-        
+
         for dia in data_empleado:
 
             fecha_dia=fields.Datetime.from_string(dia.check_in).date()
@@ -54,12 +54,12 @@ class Interconetion_payslip_ext(models.Model):
 
         for days_line in data_nomina.worked_days_line_ids:
             if days_line.code == "TAR":
-                days_line.number_of_days = 0#dias_tar   
-                days_line.number_of_hours = int(tardanza%8)
+                days_line.number_of_days = 0#dias_tar
+                days_line.number_of_hours = int(tardanza)
                 days_line.minutos = int((tardanza%1)*60)
             elif days_line.code == "HER":
-                days_line.number_of_days = 0#dias_ext   
-                days_line.number_of_hours = int(horas_ext%8)
+                days_line.number_of_days = 0#dias_ext
+                days_line.number_of_hours = int(horas_ext)
                 days_line.minutos = int((horas_ext%1)*60)
             elif days_line.code == "DLAB":
                 if faltas < 1:
