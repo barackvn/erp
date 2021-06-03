@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 from openerp.osv import osv
 import base64
-from openerp import models, fields, api
+from openerp import models, fields, api, _
 import codecs
 import pprint
 import io
@@ -16,6 +16,9 @@ import calendar
 from openerp import models, fields, api
 import urllib2
 import json
+import logging
+import requests
+_logger = logging.getLogger(__name__)
 
 class account_invoice(models.Model):
 	_inherit='account.invoice'
@@ -49,6 +52,10 @@ class account_invoice(models.Model):
 	hash_ebill=fields.Char('Hash')
 	url_pdf=fields.Char(u'Versión impresa')
 	url_pdf2=fields.Char(u'Versión impresa web')
+	url_xml=fields.Char(u'XML')
+	api_xml = fields.Binary(string='XML', readonly=True, attachment=True)
+	api_filename_xml = fields.Char()
+	url_cdr=fields.Char(u'CDR')
 	cadena_qr=fields.Char(u'Cadena para codigo QR')
 
 
@@ -72,19 +79,101 @@ class account_invoice(models.Model):
 
 	sunat_ticket_anulacion = fields.Char('numero')
 
+	@api.multi
+	def action_invoice_sent(self):
+		""" Open a window to compose an email, with the edi invoice template
+			message loaded by default
+		"""
+		self.ensure_one()
+		template = self.env.ref('ebill_nf.email_template_edi_invoice_odoofact', False)
+		compose_form = self.env.ref('mail.email_compose_message_wizard_form', False)
+		ctx = dict(
+			default_model='account.invoice',
+			default_res_id=self.id,
+			default_use_template=bool(template),
+			default_template_id=template and template.id or False,
+			default_composition_mode='comment',
+			mark_invoice_as_sent=True
+		)
+
+		ctx["default_attachment_ids"]= []
+		attachment_ids = self.env["ir.attachment"].sudo().search([('res_id','=',self.id),('res_model','=','account.invoice')])
+		_logger.info(attachment_ids)
+
+
+		if len(attachment_ids) > 0:
+			for attachment in attachment_ids:
+				ctx["default_attachment_ids"].append(attachment.id)
+		else:
+			if self.url_xml:
+				response = requests.get(self.url_xml)
+				xmlname = 'SUNAT_{}.xml'.format(self.number)
+				self.write({'api_xml':base64.b64encode(response.content)})
+				# self.write({'api_filename_xml':'{}.xml'.format(filename)})
+				datas=self.api_xml
+				# xmlname=self.api_filename_xml
+				ctx["default_attachment_ids"]=[self.env["ir.attachment"].create({
+					"res_id":self.id,
+					"res_model":'account.invoice',
+					"name":xmlname,
+					"type":"binary",
+					"datas_fname": xmlname,
+					"datas":datas,
+					"mimetype":"text/xml"
+				}).id]
+
+			if self.url_pdf:
+				response = requests.get(self.url_pdf)
+				pdfname = 'SUNAT_{}.pdf'.format(self.number)
+				ctx["default_attachment_ids"].append(self.env["ir.attachment"].create({
+					"res_id":self.id,
+					"res_model":'account.invoice',
+					"name":pdfname,
+					"type":"binary",
+					"datas_fname": pdfname,
+					"datas": base64.b64encode(response.content),
+					"mimetype":"text/pdf"
+				}).id)
+
+			if self.url_cdr:
+				response = requests.get(self.url_cdr)
+				cdrname = 'SUNAT_CDR_{}.xml'.format(self.number)
+
+				ctx["default_attachment_ids"].append(self.env["ir.attachment"].create({
+					"res_id":self.id,
+					"res_model":'account.invoice',
+					"name":cdrname,
+					"type":"binary",
+					"datas_fname": cdrname,
+					"datas":base64.b64encode(response.content),
+					"mimetype":"text/xml"
+				}).id)
+
+
+		return {
+			'name': _('Compose Email'),
+			'type': 'ir.actions.act_window',
+			'view_type': 'form',
+			'view_mode': 'form',
+			'res_model': 'mail.compose.message',
+			'views': [(compose_form.id, 'form')],
+			'view_id': compose_form.id,
+			'target': 'new',
+			'context': ctx,
+		}
 
 	@api.multi
 	def cancel_eletronico_button(self):
 		company = self[0].env.user.company_id
 		parametros = self.env['main.parameter'].search([])[0]
 		serie = self.env['serial.nubefact'].search([('serial_id','=',self[0].serie_id.id)])
-		data_json={					
+		data_json={
 				"operacion": "generar_anulacion",
 				"tipo_de_comprobante": self.it_type_document.code,
 				"serie": self.reference.split('-')[0],
 				"numero": self.reference.split('-')[1],
 				"motivo": "ERROR DEL SISTEMA",
-				"codigo_unico": "" 
+				"codigo_unico": ""
 		}
 		jsonarray = json.dumps(data_json,indent=4)
 		req = urllib2.Request(serie[0].path_nf)
@@ -115,10 +204,13 @@ class account_invoice(models.Model):
 		parametros = self.env['main.parameter'].search([])[0]
 		respuesta = self.make_einvoice()
 		if(respuesta):
+			_logger.info(respuesta)
 			self.hash_ebill = respuesta[0]
-			self.url_pdf2= ( parametros.url_external_nf + ':' + respuesta[1].split(':')[2] ) if parametros.url_external_nf else ''
+			self.url_pdf2= respuesta[1]
 			self.url_pdf= respuesta[1]
 			self.cadena_qr= respuesta[2]
+			self.url_xml= respuesta[3]
+			self.url_cdr= respuesta[4]
 
 		return res
 
@@ -130,23 +222,23 @@ class account_invoice(models.Model):
 		if len(serie)==0:
 			return
 		if self[0].journal_id.type == 'sale' or self[0].journal_id.type == 'sale_refund':
-		 	for self_act in self:
+			for self_act in self:
 				if self_act.hash_ebill:
-		 			return
-		 		# esto se tiene que consultar el tipo de operacion sunat:
-		 		# ventas ninternas, itinerantes, exportación y similares por ahora siempre 1 venta interna
-		 		sunat_transaction=self.sunat_transaction_type
-		 		nombrecliente = ""
-		 		if self_act.partner_id.is_company:
-		 			nombrecliente=self_act.partner_id.name
-		 		else:
-		 			nombrecliente=self_act.commercial_partner_id.name
-		 			# nombrecliente=str(self_act.partner_id.first_name)
-		 			# if self_act.partner_id.last_name_f:
-		 			# 	nombrecliente=nombrecliente+" "+str(self_act.partner_id.last_name_f)
-		 			# if self_act.partner_id.last_name_m:
-		 			# 	nombrecliente=nombrecliente+" "+str(self_act.partner_id.last_name_m)
-		 		documento_que_se_modifica_tipo=""
+					return
+				# esto se tiene que consultar el tipo de operacion sunat:
+				# ventas ninternas, itinerantes, exportación y similares por ahora siempre 1 venta interna
+				sunat_transaction=self.sunat_transaction_type
+				nombrecliente = ""
+				if self_act.partner_id.is_company:
+					nombrecliente=self_act.partner_id.name
+				else:
+					nombrecliente=self_act.commercial_partner_id.name
+					# nombrecliente=str(self_act.partner_id.first_name)
+					# if self_act.partner_id.last_name_f:
+					# 	nombrecliente=nombrecliente+" "+str(self_act.partner_id.last_name_f)
+					# if self_act.partner_id.last_name_m:
+					# 	nombrecliente=nombrecliente+" "+str(self_act.partner_id.last_name_m)
+				documento_que_se_modifica_tipo=""
 				documento_que_se_modifica_serie=""
 				documento_que_se_modifica_numero=""
 				tipo_de_nota_de_credito=""
@@ -202,7 +294,7 @@ class account_invoice(models.Model):
 				indice =0
 
 				for linea in self_act.invoice_line_ids:
-					
+
 					tax_percent       = 0
 					other_tax_percent = 0
 					percent           = 0
@@ -218,11 +310,11 @@ class account_invoice(models.Model):
 								other_tax_percent=other_tax_percent+impuesto.amount
 						else:
 							if impuesto.amount_type == 'percent':
-				 				tax_percent =tax_percent+ impuesto.amount/100
-				 			else:
-				 				tax_percent =tax_percent+(impuesto.amount)
-				 	if not impuesto.id:
-				 		raise osv.except_osv('Error!', u'No puede crearse Lineas de Factura sin Impuestos')
+								tax_percent =tax_percent+ impuesto.amount/100
+							else:
+								tax_percent =tax_percent+(impuesto.amount)
+					if not impuesto.id:
+						raise osv.except_osv('Error!', u'No puede crearse Lineas de Factura sin Impuestos')
 					if impuesto.price_include:
 						unit_included = linea.price_unit
 						unit_noincluded = unit_included / (1 + percent)
@@ -265,7 +357,7 @@ class account_invoice(models.Model):
 							total_gratuita = total_gratuita + abs(float(decimal.Decimal(str(totalsinimpuetos+imp_igv)).quantize(decimal.Decimal("1.11"), decimal.ROUND_HALF_DOWN)))
 
 					umed = 'ZZ' if linea.product_id.type=='service' else (linea.uom_id.einvoice_06.code or "NIU")
-					
+
 					total_igv_nograb = float(decimal.Decimal(str(abs(total_igv_nograb))).quantize(decimal.Decimal("1.11"), decimal.ROUND_HALF_DOWN))
 					subtotal_r = float(decimal.Decimal(str(abs(totalsinimpuetos))).quantize(decimal.Decimal("1.11"), decimal.ROUND_HALF_DOWN))
 					igv_r      = float(decimal.Decimal(str(abs(imp_igv))).quantize(decimal.Decimal("1.11"), decimal.ROUND_HALF_DOWN))
@@ -273,15 +365,15 @@ class account_invoice(models.Model):
 					item={
 							"unidad_de_medida": umed,
 							"codigo": linea.product_id.default_code if linea.product_id.default_code else "",
-							"descripcion": linea.name,
+							"descripcion": str(linea.name),
 							"cantidad": linea.quantity,
-							"valor_unitario": "%.6f" % abs(unit_noincluded)  if impuesto.ebill_tax_type not in ['6','2','3','4','5','7'] else "%.6f" % abs(unit_included),
-							"precio_unitario": "%.6f" % abs(unit_included),
-							"descuento": "%.2f" % descuento if descuento != 0 else "",
-							"subtotal": "%.2f" % subtotal_r  if impuesto.ebill_tax_type not in ['6','2','3','4','5','7'] else "%.2f" % total_r,
+							"valor_unitario": float("%.6f" % abs(unit_noincluded)  if impuesto.ebill_tax_type not in ['6','2','3','4','5','7'] else "%.6f" % abs(unit_included)),
+							"precio_unitario": float("%.6f" % abs(unit_included)),
+							"descuento": float("%.2f" % descuento if descuento != 0 else "0.00"),
+							"subtotal": float("%.2f" % subtotal_r  if impuesto.ebill_tax_type not in ['6','2','3','4','5','7'] else "%.2f" % total_r),
 							"tipo_de_igv": tipo_de_igv,
-							"igv": "%.2f" % igv_r if impuesto.ebill_tax_type not in ['6','2','3','4','5','7'] else '0.00',
-							"total": "%.2f" % total_r,
+							"igv": float("%.2f" % igv_r if impuesto.ebill_tax_type not in ['6','2','3','4','5','7'] else '0.00'),
+							"total": float("%.2f" % total_r),
 							"anticipo_regularizacion": anticipo_regularizacion,
 							"anticipo_documento_serie": serie_a,
 							"anticipo_documento_numero": numero_a
@@ -375,7 +467,7 @@ class account_invoice(models.Model):
 
 				user_pool = self.pool.get('res.users')
 				# pprint.pprint(self.env.uid)
-				
+
 				# ???
 				#user = self.env['res.users'].browse(self.env.uid)
 				#tz = pytz.timezone(self._context.get('tz') or 'UTC')
@@ -414,41 +506,41 @@ class account_invoice(models.Model):
 							ocompras.append(picking.client_order_ref)
 				if len(ocompra)>20:
 					ocompra=ocompra[:20]
-				
-				
-				
+
+
+				type(self_act.reference[0:4])
 				head_json = {
 					"operacion": "generar_comprobante",
 					"tipo_de_comprobante": tdoc,
-					"serie": self_act.reference[0:4],
+					"serie": str(self_act.reference[0:4]),
 					"numero": int(self_act.reference[5:]),
-					"sunat_transaction": sunat_transaction,
+					"sunat_transaction": str(sunat_transaction),
 					"cliente_tipo_de_documento": str(int(self_act.commercial_partner_id.type_document_partner_it.code)),
-					"cliente_numero_de_documento": self_act.commercial_partner_id.nro_documento,
-					"cliente_denominacion": nombrecliente,
-					"cliente_direccion": self_act.partner_id.street if self_act.partner_id.street else "",
+					"cliente_numero_de_documento": str(self_act.commercial_partner_id.nro_documento),
+					"cliente_denominacion": str(nombrecliente),
+					"cliente_direccion": str(self_act.partner_id.street if self_act.partner_id.street else ""),
 					"cliente_email": self_act.partner_id.email or self_act.commercial_partner_id.email or  "",
 					"cliente_email_1": "",
 					"cliente_email_2": "",
 					"fecha_de_emision": self_act.date_invoice,
 					"fecha_de_vencimiento": self_act.date_due,
 					"moneda": 1 if self_act.currency_id.name == 'PEN' else 2,
-					"tipo_de_cambio": "%.3f" % self_act.currency_rate_auto,
-					"porcentaje_de_igv": "%.2f" % tax_percent,
+					"tipo_de_cambio": float("%.3f" % self_act.currency_rate_auto),
+					"porcentaje_de_igv": float("%.2f" % tax_percent),
 					"descuento_global": "",
-					"total_descuento": "%.6f" % total_descuento if total_descuento!=0 else "",
-					"total_anticipo": "%.2f" % ntotanticipo,
-					"total_gravada": "%.2f" % total_gravada_r,
-					"total_inafecta": "%.2f" % total_inafecta_r,
-					"total_exonerada": "%.2f" % total_exonerada_r,
-					"total_igv": "%.2f" % total_igv_r,
-					"total_gratuita": "%.2f" % total_gratuita_r,
-					"total_otros_cargos": "%.2f" % total_otros_cargos_r,
-					"total": "%.2f" % total_r,
+					"total_descuento": float("%.6f" % total_descuento if total_descuento!=0 else "0.00"),
+					"total_anticipo": float("%.2f" % ntotanticipo),
+					"total_gravada": float("%.2f" % total_gravada_r),
+					"total_inafecta": float("%.2f" % total_inafecta_r),
+					"total_exonerada": float("%.2f" % total_exonerada_r),
+					"total_igv": float("%.2f" % total_igv_r),
+					"total_gratuita": float("%.2f" % total_gratuita_r),
+					"total_otros_cargos": float("%.2f" % total_otros_cargos_r),
+					"total": float("%.2f" % total_r),
 					"percepcion_tipo": self.perception_type if self.perception_type else "",
-					"percepcion_base_imponible": "%.2f" % self.preception_base if self.perception_type else "0.00",
-					"total_percepcion": "%.2f" % self.perception_amount if self.perception_type else "0.00",
-					"total_incluido_percepcion": "%.2f" % self_act.amount_total+self.perception_amount if self.perception_type else "0.00",
+					"percepcion_base_imponible": float("%.2f" % self.preception_base if self.perception_type else "0"),
+					"total_percepcion": float("%.2f" % self.perception_amount if self.perception_type else "0.00"),
+					"total_incluido_percepcion": float("%.2f" % self_act.amount_total+self.perception_amount if self.perception_type else "0.00"),
 					"detraccion": "true" if self.have_detraction else "false",
 					"observaciones": observacion,
 					"documento_que_se_modifica_tipo": documento_que_se_modifica_tipo,
@@ -459,7 +551,7 @@ class account_invoice(models.Model):
 					"enviar_automaticamente_a_la_sunat": "false",
 					"enviar_automaticamente_al_cliente": "true" if self_act.partner_id.email else 'false',
 					"codigo_unico": "",
-					"condiciones_de_pago": plazo_pago,
+					"condiciones_de_pago": str(plazo_pago),
 					"medio_de_pago": "",
 					"placa_vehiculo": "",
 					"orden_compra_servicio": ocompra,
@@ -469,7 +561,7 @@ class account_invoice(models.Model):
 				head_json.update({'items':lineas})
 				if len(guias_n)>0:
 					head_json.update({'guias':guias_n})
-				
+
 				pprint.pprint(head_json)
 				# raise osv.except_osv('Error!', head_json)
 				vals = {
@@ -492,7 +584,8 @@ class account_invoice(models.Model):
 
 
 				# self.env['account.invoice.ebill'].create(vals)
-
+				_logger.info('head_json')
+				_logger.info(head_json)
 				jsonarray = json.dumps(head_json,indent=4)
 				req = urllib2.Request(serie[0].path_nf)
 				req.add_header('Content-Type', 'application/json')
@@ -503,7 +596,8 @@ class account_invoice(models.Model):
 				except urllib2.HTTPError as e:
 					raise osv.except_osv('Error al procesar datos de factura electrónica', e.read())
 				respuesta = json.load(response)
-				return (respuesta['codigo_hash'],respuesta['enlace_del_pdf'],respuesta['cadena_para_codigo_qr'])
+				_logger.info(respuesta)
+				return (respuesta['codigo_hash'],respuesta['enlace_del_pdf'],respuesta['cadena_para_codigo_qr'],respuesta['enlace_del_xml'],respuesta['enlace_del_cdr'])
 		return False
 
 class advance_payment(models.Model):

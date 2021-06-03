@@ -11,9 +11,9 @@
             <field name='arch' type='xml'>
 
                         <!--
-                   <header > 
+                   <header >
 
-                    <button string="Cancelar Fact. Elect."  name="cancel_eletronico_button" confirm="Esta seguro de enviar la Anulación a Sunat?" type="object" class="oe_highlight"/> 
+                    <button string="Cancelar Fact. Elect."  name="cancel_eletronico_button" confirm="Esta seguro de enviar la Anulación a Sunat?" type="object" class="oe_highlight"/>
 
                     </header> -->
 
@@ -39,7 +39,8 @@
                 <field name="date_due" position="after">
                     <field name = "hash_ebill" readonly="1"/>
                     <field name = "url_pdf" readonly="1" widget="url"/>
-                    <field name = "url_pdf2" readonly="1" widget="url"/>
+                    <field name = "url_xml" readonly="1" widget="url"/>
+                    <field name = "url_cdr" readonly="1" widget="url"/>
                 </field>
                 <field name="reference" position="after">
                     <field name="credit_invoice_type" attrs="{'invisible':[('type','=','out_invoice')],'required':[('type','=','out_refund')]}" />
