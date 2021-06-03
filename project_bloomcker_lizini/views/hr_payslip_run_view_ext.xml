@@ -1,0 +1,29 @@
+
+<odoo>
+    <record id="hr_payslip_run_view_ext" model="ir.ui.view">
+        <field name="name">hr_payslip_run_view_ext</field>
+        <field name="model">hr.payslip.run</field>
+        <field name="inherit_id" ref="planilla.hr_payslip_run_inherit_form"/>
+        <field name="arch" type="xml">
+            <xpath expr="//form/header/button[@name='exportar_planilla_tabular_xlsx']" position="after">
+                <button name="exportar_planilla_tabular_total_xlsx" string="Exportar excel sumarizado" type="object" class="fa fa-file-text-o" states="draft"/>
+            </xpath>
+        </field>
+    </record>
+
+    <record id="planilla_exportar_nomina_total_excel" model="ir.actions.server">
+        <field name="name">Exportar Nómina Sumarizada Excel</field>
+        <field name="model_id" ref="model_hr_payslip_run"/>
+        <field name="state">code</field>
+        <field name="code"> action= env['hr.payslip.run'].browse(context['active_ids']).exportar_planilla_tabular_total_xlsx()</field>
+    </record>
+
+
+    <record id="more_button_exportar_nomina_total_excel" model="ir.values">
+        <field eval="'client_action_multi'" name="key2"/>
+        <field eval="'hr.payslip.run'" name="model"/>
+        <field name="name">Exportar Nómina Sumarizada Excel</field>
+        <field eval="'ir.actions.server,%d'%planilla_exportar_nomina_total_excel" name="value"/>
+    </record>
+
+</odoo>

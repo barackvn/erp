@@ -156,34 +156,21 @@ class HrPayslipRun(models.Model):
 				filtro = []
 				for line in record.env['planilla.afp.net.xlsx'].search(filtro):
 					worksheet.write(x, 0, line.id if line.id else '')
-					worksheet.write(
-						x, 1, line.cuspp if line.cuspp else '')
-					worksheet.write(
-						x, 2, line.tipo_doc if line.tipo_doc else '')
-
-					worksheet.write(
-						x, 3, line.identification_id if line.identification_id else '')
+					worksheet.write(x, 1, line.cuspp if line.cuspp else '')
+					worksheet.write(x, 2, line.tipo_doc if line.tipo_doc else '')
+					worksheet.write(x, 3, line.identification_id if line.identification_id else '')
 					worksheet.write(x, 4, line.a_paterno)
 					worksheet.write(x, 5, line.a_materno)
 					worksheet.write(x, 6, line.nombres)
-					worksheet.write(
-						x, 7, line.relacion_laboral if line.relacion_laboral else '')
-					worksheet.write(
-						x, 8, line.inicio_relacion_laboral if line.inicio_relacion_laboral else '')
-					worksheet.write(
-						x, 9, line.cese_relacion_laboral if line.cese_relacion_laboral else '')
-					worksheet.write(
-						x, 10, line.excepcion_aportador if line.excepcion_aportador else '')
-					worksheet.write(
-						x, 11, line.remuneracion_asegurable, numberdos)
-					worksheet.write(
-						x, 12, line.aporte_fin_provisional, numberdos)
-					worksheet.write(
-						x, 13, line.aporte_sin_fin_provisional, numberdos)
-					worksheet.write(
-						x, 14, line.aporte_voluntario_empleador, numberdos)
-					worksheet.write(
-						x, 15, line.regimen_laboral if line.regimen_laboral else '')
+					worksheet.write(x, 7, line.relacion_laboral if line.relacion_laboral else '')
+					worksheet.write(x, 8, line.inicio_relacion_laboral if line.inicio_relacion_laboral else '')
+					worksheet.write(x, 9, line.cese_relacion_laboral if line.cese_relacion_laboral else '')
+					worksheet.write(x, 10, line.excepcion_aportador if line.excepcion_aportador else '')
+					worksheet.write(x, 11, line.remuneracion_asegurable, numberdos)
+					worksheet.write(x, 12, line.aporte_fin_provisional, numberdos)
+					worksheet.write(x, 13, line.aporte_sin_fin_provisional, numberdos)
+					worksheet.write(x, 14, line.aporte_voluntario_empleador, numberdos)
+					worksheet.write(x, 15, line.regimen_laboral if line.regimen_laboral else '')
 
 					x = x + 1
 
@@ -490,36 +477,33 @@ class HrPayslipRun(models.Model):
 			raise UserError('Falta configurar un directorio de descargas en el menu Configuracion/Parametros/Directorio de Descarga')
 
 		workbook = Workbook(direccion+'planilla_tabular.xls')
+
 		for record in self:
 
 			record.env['planilla.planilla.tabular.wizard'].reconstruye_tabla(record.date_start,record.date_end)
 
 			worksheet = workbook.add_worksheet(
-				str(record.id)+'-'+record.date_start+'-'+record.date_end)
+				str(record.id)+'-'+record.date_start+'-'+record.date_end)			#Cambiar este nombre
 			worksheet.set_landscape()  # Horizontal
 			worksheet.set_paper(9)  # A-4
 			worksheet.set_margins(left=0.75, right=0.75, top=1, bottom=1)
 			worksheet.fit_to_pages(1, 0)  # Ajustar por Columna
 
-			fontSize = 8
+			fontSize = 10															#Antes 8
 			bold = workbook.add_format(
-				{'bold': True, 'font_name': 'Arial', 'font_size': fontSize})
-			normal = workbook.add_format()
+			{'bold': True, 'font_name': 'Arial', 'font_size': fontSize})
+			#normal = workbook.add_format()											#Esto creo que no hace nada...
 			boldbord = workbook.add_format({'bold': True, 'font_name': 'Arial'})
 			# boldbord.set_border(style=1)
 			boldbord.set_align('center')
 			boldbord.set_align('bottom')
 			boldbord.set_text_wrap()
 			boldbord.set_font_size(fontSize)
-			boldbord.set_bg_color('#99CCFF')
-			numberdos = workbook.add_format(
-				{'num_format': '0.00', 'font_name': 'Arial', 'align': 'right'})
-			formatLeft = workbook.add_format(
-				{'num_format': '0.00', 'font_name': 'Arial', 'align': 'left', 'font_size': fontSize})
-			formatLeftColor = workbook.add_format(
-				{'bold': True, 'num_format': '0.00', 'font_name': 'Arial', 'align': 'left', 'bg_color': '#99CCFF', 'font_size': fontSize})
-			styleFooterSum = workbook.add_format(
-				{'bold': True, 'num_format': '0.00', 'font_name': 'Arial', 'align': 'right', 'font_size': fontSize, 'top': 1, 'bottom': 2})
+			boldbord.set_bg_color('#11AA66')										#Default:#99CCFF
+			numberdos = workbook.add_format({'num_format': '0.00', 'font_name': 'Arial', 'align': 'right'})
+			formatLeft = workbook.add_format({'num_format': '0.00', 'font_name': 'Arial', 'align': 'left', 'font_size': fontSize})
+			formatLeftColor = workbook.add_format({'bold': True, 'num_format': '0.00', 'font_name': 'Arial', 'align': 'left', 'bg_color': '#99CCFF', 'font_size': fontSize})
+			styleFooterSum = workbook.add_format({'bold': True, 'num_format': '0.00', 'font_name': 'Arial', 'align': 'right', 'font_size': fontSize, 'top': 1, 'bottom': 2})
 			styleFooterSum.set_bottom(6)
 			numberdos.set_font_size(fontSize)
 			bord = workbook.add_format()
@@ -540,8 +524,8 @@ class HrPayslipRun(models.Model):
 			reload(sys)
 			sys.setdefaultencoding('iso-8859-1')
 			worksheet.merge_range(
-				'D1:O1', u"PLANILLA DE SUELDOS Y SALARIOS", title)
-			worksheet.set_row(x, 29)
+				'D1:O1', u"PLANILLA DE SUELDOS Y SALARIOS", title)						#Default: D1:O1
+			worksheet.set_row(x, 29)													#Default: 29
 			x = x+2
 
 			worksheet.write(x, 0, u"Empresa:", bold)
@@ -658,6 +642,154 @@ class HrPayslipRun(models.Model):
 
 		return self.env['planilla.warning'].info(title='Resultado de generacion', message="SE GENERO DE MANERA EXITOSA!")
 
+	@api.multi
+	def exportar_planilla_tabular_total_xlsx(self):
+    		
+		try:
+			direccion = self.env['main.parameter.hr'].search([])[0].dir_create_file
+		except:
+			raise UserError('Falta configurar un directorio de descargas en el menu Configuracion/Parametros/Directorio de Descarga')
+
+		workbook = Workbook(direccion+'planilla_tabular.xls')
+
+		totalsheet=workbook.add_worksheet('Nomina Sumarizada')
+		procesados=[]
+		first=True
+		totalsheet.set_landscape()  # Horizontal
+		totalsheet.set_paper(9)  # A-4
+		totalsheet.set_margins(left=0.75, right=0.75, top=1, bottom=1)
+		totalsheet.fit_to_pages(1, 0)  # Ajustar por Columna
+		fontSize = 10															#Antes 8
+		bold = workbook.add_format(
+		{'bold': True, 'font_name': 'Arial', 'font_size': fontSize})
+		boldbord = workbook.add_format({'bold': True, 'font_name': 'Arial'})
+		boldbord.set_align('center')
+		boldbord.set_align('bottom')
+		boldbord.set_text_wrap()
+		boldbord.set_font_size(fontSize)
+		boldbord.set_bg_color('#99CCFF')										#Default:#99CCFF
+		numberdos = workbook.add_format({'num_format': '0.00', 'font_name': 'Arial', 'align': 'right'})
+		formatLeft = workbook.add_format({'num_format': '0.00', 'font_name': 'Arial', 'align': 'left', 'font_size': fontSize})
+		formatLeftColor = workbook.add_format({'bold': True, 'num_format': '0.00', 'font_name': 'Arial', 'align': 'left', 'bg_color': '#99CCFF', 'font_size': fontSize})
+		styleFooterSum = workbook.add_format({'bold': True, 'num_format': '0.00', 'font_name': 'Arial', 'align': 'right', 'font_size': fontSize, 'top': 1, 'bottom': 2})
+		styleFooterSum.set_bottom(6)
+		numberdos.set_font_size(fontSize)
+		bord = workbook.add_format()
+		bord.set_border(style=1)
+		bord.set_text_wrap()
+
+		title = workbook.add_format({'bold': True, 'font_name': 'Arial'})
+		title.set_align('center')
+		title.set_align('vcenter')
+		title.set_font_size(18)
+		x = 0
+
+		for record in self:						#Todos los empleados
+			record.env['planilla.planilla.tabular.wizard'].reconstruye_tabla(record.date_start,record.date_end)
+			import sys
+			reload(sys)
+			sys.setdefaultencoding('iso-8859-1')
+			if first:
+				company = record.env['res.company'].search([], limit=1)[0]
+				totalsheet.merge_range('D1:O1', u"PLANILLA DE SUELDOS Y SALARIOS", title)						#Default: D1:O1
+				totalsheet.set_row(x, 29)													#Default: 29
+				x = x+2
+				totalsheet.write(x, 0, u"Empresa:", bold)
+				totalsheet.write(x, 1, company.name, formatLeft)
+				x = x+1
+				periodo=[record.date_start,record.date_end]
+				for nomina in self:
+					if nomina.date_start < periodo[0]:
+						periodo[0]=nomina.date_start
+					if nomina.date_end > periodo[1]:
+						periodo[1]=nomina.date_end
+				totalsheet.write(x,0, u"Periodo:", bold)
+				totalsheet.write(x,1, "{}  -  {}".format(periodo[0],periodo[1]),formatLeft)
+				x=x+1
+				totalsheet.write(x, 0, u"Mes:", bold)
+				totalsheet.write(x, 1, record.get_mes(int(record.date_end[5:7]) if record.date_end else 0).upper()+"-"+record.date_end[:4], formatLeft)
+				x = x+3
+				x=6	#fila del encabezado
+		 		header_planilla_tabular = record.env['ir.model.fields'].search(
+						[('name', 'like', 'x_%'), ('model', '=', 'planilla.tabular')], order="create_date")
+				totalsheet.write(x, 0, header_planilla_tabular[0].field_description, formatLeftColor)
+				total=[0.0 for f in range(len(header_planilla_tabular)+1)]
+				for i in range(1, len(header_planilla_tabular)):
+					if i not in (3,4):
+						totalsheet.write(x, i, header_planilla_tabular[i].field_description, boldbord)
+				totalsheet.write(x,i+1,'Aportes ESSALUD',boldbord)
+				totalsheet.set_row(x, 50)
+				fields = ['\"'+column.name+'\"' for column in header_planilla_tabular]
+				first=False
+
+			query = 'select %s from planilla_tabular' % (','.join(fields))
+			record.env.cr.execute(query)
+			datos_planilla = record.env.cr.fetchall()
+			range_row = len(datos_planilla[0] if len(datos_planilla) > 0 else 0)
+			
+			for i in range(len(datos_planilla)):	#empleado a procesar
+				if datos_planilla[i][1] in procesados:
+					continue
+				
+				procesados.append(datos_planilla[i][1])
+				data=[0.0 for f in range(range_row+1)]
+				for k in range(3):
+					data[k]=(datos_planilla[i][k] if datos_planilla[i][k] else '0.00')
+
+				for nomina in self:					#recorrido para encontrar todas sus entradas en todas las nominas
+					nomina.env['planilla.planilla.tabular.wizard'].reconstruye_tabla(record.date_start,record.date_end)
+					nomina.env.cr.execute(query)
+					datos_nomina = nomina.env.cr.fetchall()
+					bandera2=0
+
+					for ii in range(len(datos_nomina)):	#para encontrar sus entradas en la nomina actual
+						if datos_planilla[i][1] != datos_nomina[ii][1]:
+							continue
+						for j in range(range_row):			#para moverse en la data
+							if j not in range(4):
+								data[j]+=(datos_nomina[ii][j] if datos_nomina[ii][j] else 0.00)
+								total[j]+=(datos_nomina[ii][j] if datos_nomina[ii][j] else 0.00)
+						essalud = record.env['hr.payslip'].browse(datos_nomina[ii][4]).essalud
+						data[j+1]+=essalud
+						break
+				x+=1
+				for i in range(len(data)):
+					totalsheet.write(x, i, data[i], numberdos if type(data)==(type(0) or type(0.0)) else formatLeft)		
+		
+		x = x + 2
+
+		for j in range(5, len(total)):
+			totalsheet.write(x, j, total[j], styleFooterSum)
+
+		# seteando tamaño de columnas
+		col_widths = record.get_col_widths(datos_planilla)
+		totalsheet.set_column(0, 0, col_widths[0]-10)
+		totalsheet.set_column(1, 1, col_widths[1]-7)
+		for i in range(2, len(col_widths)):
+			totalsheet.set_column(i, i, col_widths[i])
+		
+		totalsheet.set_column('D:D',None,None,{'hidden':True})
+		totalsheet.set_column('E:E',None,None,{'hidden':True})	
+
+		workbook.close()
+		f = open(direccion+'planilla_tabular.xls', 'rb')
+
+		vals = {
+			'output_name': 'planilla_tabular.xls',
+			'output_file': base64.encodestring(''.join(f.readlines())),
+		}
+
+		sfs_id = self.env['planilla.export.file'].create(vals)
+
+		return {
+			"type": "ir.actions.act_window",
+			"res_model": "planilla.export.file",
+			"views": [[False, "form"]],
+			"res_id": sfs_id.id,
+			"target": "new",
+		}
+	
+	
 	@api.multi
 	def _wizard_generar_asiento_contable(self):
 
