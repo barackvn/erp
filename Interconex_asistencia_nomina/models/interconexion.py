@@ -7,8 +7,8 @@ class Employee_schedule_ext(models.Model):
 
     _inherit='hr.employee'
 
-    hora_ent_fija = fields.Datetime('Hora de Entrada', default=datetime(1900,1,1,12,27,40))
-    hora_sal_fija = fields.Datetime('Hora de Salida', default=datetime(1900,1,1,21,27,40))
+    hora_ent_fija = fields.Datetime('Hora de Entrada', default=datetime(1900,1,1,12,00,00))
+    hora_sal_fija = fields.Datetime('Hora de Salida', default=datetime(1900,1,1,21,00,00))          #por alguna razon se le debe sumar 4 horas
 
 
 class Interconetion_payslip_ext(models.Model):
@@ -72,19 +72,18 @@ class Interconetion_payslip_ext(models.Model):
                 horas_trabajadas+=dif
 
             delta1=datetime(1999,1,1,hora_ent_fija.hour,hora_ent_fija.minute,hora_ent_fija.second)-datetime(1999,1,1,hora_ent.hour,hora_ent.minute,hora_ent.second)
-            delta1=delta1.total_seconds()-1660
+            delta1=delta1.total_seconds()
             delta2=datetime(1999,1,1,hora_sal.hour,hora_sal.minute,hora_sal.second)-datetime(1999,1,1,hora_sal_fija.hour,hora_sal_fija.minute,hora_sal_fija.second)
-            delta2=delta2.total_seconds()+1660
-
+            delta2=delta2.total_seconds()
 
 
             print("delta1",delta1)
             if delta1 <= 0:
-                dif=(hora_ent.hour+float(hora_ent.minute)/60+float(hora_ent.second)/3600)-(hora_ent_fija.hour+float(hora_ent_fija.minute-27)/60+float(hora_ent_fija.second-40)/3600)
+                dif=(hora_ent.hour+float(hora_ent.minute)/60+float(hora_ent.second)/3600)-(hora_ent_fija.hour+float(hora_ent_fija.minute)/60+float(hora_ent_fija.second)/3600)
                 tardanza+=dif
             print("delta2",delta2)
             if delta2 >= 0:
-                dif= (hora_sal.hour+float(hora_sal.minute)/60+float(hora_sal.second)/3600)-(hora_sal_fija.hour+float(hora_sal_fija.minute-27)/60+float(hora_sal_fija.second-40)/3600)
+                dif= (hora_sal.hour+float(hora_sal.minute)/60+float(hora_sal.second)/3600)-(hora_sal_fija.hour+float(hora_sal_fija.minute)/60+float(hora_sal_fija.second)/3600)
                 horas_ext+=dif
 
 

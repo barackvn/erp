@@ -6,14 +6,12 @@
     "author": "Carlos J Márquez",
     "depends": [
         "base",
-        "planilla"
+        "planilla",
+        "hr_attendance"
     ],
     "data": [
         'views/interconexion_view.xml',
- #       'views/hr_nomina_ext.xml',
-  #      'views/break_bl_view.xml',
-   #     'views/payslip_ext.xml',
-        # 'security/ir.model.access.csv',
+        'views/horas_ent_sal_view.xml'
    ],
     "application": True,
 }
