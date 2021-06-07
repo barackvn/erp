@@ -1,16 +1,19 @@
-
 <odoo>
-    <record id="hr_payslip_run_view_ext" model="ir.ui.view">
-        <field name="name">hr_payslip_run_view_ext</field>
+    <!--Vistas de los botones-->>
+    <record id="hr_payslip_run_ext_buttons" model="ir.ui.view">
+        <field name="name">hr_payslip_run_ext_buttons</field>
         <field name="model">hr.payslip.run</field>
         <field name="inherit_id" ref="planilla.hr_payslip_run_inherit_form"/>
         <field name="arch" type="xml">
             <xpath expr="//form/header/button[@name='exportar_planilla_tabular_xlsx']" position="after">
                 <button name="exportar_planilla_tabular_total_xlsx" string="Exportar excel sumarizado" type="object" class="fa fa-file-text-o" states="draft"/>
+                <button name="genera_planilla_afp_net_sumarizada" string="Exportar afp sumarizado" type="object" class="fa fa-file-text-o" states="draft"/>
+                <button name="exportar_plame_sumarizado" string="Exportar Plame sumarizado" type="object" class="fa fa-file-text-o" states="draft"/>
             </xpath>
         </field>
     </record>
 
+    <!--Nomina-->
     <record id="planilla_exportar_nomina_total_excel" model="ir.actions.server">
         <field name="name">Exportar Nómina Sumarizada Excel</field>
         <field name="model_id" ref="model_hr_payslip_run"/>
@@ -18,12 +21,87 @@
         <field name="code"> action= env['hr.payslip.run'].browse(context['active_ids']).exportar_planilla_tabular_total_xlsx()</field>
     </record>
 
-
     <record id="more_button_exportar_nomina_total_excel" model="ir.values">
         <field eval="'client_action_multi'" name="key2"/>
         <field eval="'hr.payslip.run'" name="model"/>
         <field name="name">Exportar Nómina Sumarizada Excel</field>
         <field eval="'ir.actions.server,%d'%planilla_exportar_nomina_total_excel" name="value"/>
     </record>
+
+    <!--Afp-->
+    <record id="planilla_generar_afp_total" model="ir.actions.server">
+        <field name="name">Exportar Afp Sumarizado</field>
+        <field name="model_id" ref="model_hr_payslip_run"/>
+        <field name="state">code</field>
+        <field name="code"> action= env['hr.payslip.run'].browse(context['active_ids']).genera_planilla_afp_net_sumarizada()</field>
+    </record>
+
+    <record id="more_button_generar_afp_total" model="ir.values">
+        <field eval="'client_action_multi'" name="key2"/>
+        <field eval="'hr.payslip.run'" name="model"/>
+        <field name="name">Exportar Afp Sumarizado</field>
+        <field eval="'ir.actions.server,%d'%planilla_generar_afp_total" name="value"/>
+    </record>
+
+    <!--Plame-->
+    <record id="planilla_generar_plame_total" model="ir.actions.server">
+        <field name="name">Exportar Plame Sumarizado</field>
+        <field name="model_id" ref="model_hr_payslip_run"/>
+        <field name="state">code</field>
+        <field name="code"> action= env['hr.payslip.run'].browse(context['active_ids']).exportar_plame_sumarizado()</field>
+    </record>
+
+    <record id="more_button_generar_plame_total" model="ir.values">
+        <field eval="'client_action_multi'" name="key2"/>
+        <field eval="'hr.payslip.run'" name="model"/>
+        <field name="name">Exportar Plame Sumarizado</field>
+        <field eval="'ir.actions.server,%d'%planilla_generar_plame_total" name="value"/>
+    </record>
+
+    <!--Plame horas-->
+    <record id="planilla_generar_plame_horas_sumarizado" model="ir.actions.server">
+        <field name="name">Exportar Plame Horas Sumarizado</field>
+        <field name="model_id" ref="model_hr_payslip_run"/>
+        <field name="state">code</field>
+        <field name="code"> action= env['hr.payslip.run'].browse(context['active_ids']).exportar_plame_horas_sumarizado()</field>
+    </record>
+
+    <record id="more_button_generar_plame_horas_total" model="ir.values">
+        <field eval="'client_action_multi'" name="key2"/>
+        <field eval="'hr.payslip.run'" name="model"/>
+        <field name="name">Exportar Plame Horas Sumarizado</field>
+        <field eval="'ir.actions.server,%d'%planilla_generar_plame_horas_sumarizado" name="value"/>
+    </record>
+
+    <!--Plame subcidio-->
+    <record id="planilla_generar_plame_subsidios_sumarizado" model="ir.actions.server">
+        <field name="name">Exportar Plame Subsidios Sumarizado</field>
+        <field name="model_id" ref="model_hr_payslip_run"/>
+        <field name="state">code</field>
+        <field name="code"> action= env['hr.payslip.run'].browse(context['active_ids']).exportar_plame_subsidios_sumarizado()</field>
+    </record>
+
+    <record id="more_button_generar_plame_subsidios_sumarizado" model="ir.values">
+        <field eval="'client_action_multi'" name="key2"/>
+        <field eval="'hr.payslip.run'" name="model"/>
+        <field name="name">Exportar Plame Subsidios Sumarizado</field>
+        <field eval="'ir.actions.server,%d'%planilla_generar_plame_subsidios_sumarizado" name="value"/>
+    </record>
+
+    <!--Plame tasas-->
+    <record id="planilla_generar_plame_tasas_sumarizado" model="ir.actions.server">
+        <field name="name">Exportar Plame Tasas Sumarizado</field>
+        <field name="model_id" ref="model_hr_payslip_run"/>
+        <field name="state">code</field>
+        <field name="code"> action= env['hr.payslip.run'].browse(context['active_ids']).exportar_plame_tasas_sumarizado()</field>
+    </record>
+
+    <record id="more_button_generar_plame_tasas_sumarizado" model="ir.values">
+        <field eval="'client_action_multi'" name="key2"/>
+        <field eval="'hr.payslip.run'" name="model"/>
+        <field name="name">Exportar Plame Tasas Sumarizado</field>
+        <field eval="'ir.actions.server,%d'%planilla_generar_plame_tasas_sumarizado" name="value"/>
+    </record>
+
 
 </odoo>

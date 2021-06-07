@@ -11,6 +11,9 @@
         "base",
         "planilla"
     ],
-    "data": ['views/hr_payslip_run_view_ext.xml'],
+    "data": [
+        'views/hr_payslip_run_view_ext.xml',
+        'views/hr_employee_entry_date_view.xml'
+        ],
     "application": True,
 }

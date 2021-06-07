@@ -1,0 +1,13 @@
+<odoo>
+    <record model="ir.ui.view" id="view_employee_form_rrhh_ext">
+        <field name="name">view_employee_form_rrhh_ext</field>
+        <field name="model">hr.employee</field>
+        <field name="inherit_id" ref="hr.view_employee_form"/>
+        <field name="arch" type="xml">
+            <xpath expr="//group[@name='active_group']" position="inside">
+                <field name="date_entry"/>
+                <field name="date_end"/>
+            </xpath>
+        </field>
+    </record>
+</odoo>
