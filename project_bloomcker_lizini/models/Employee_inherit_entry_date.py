@@ -25,4 +25,4 @@ class EmployeeExt(models.Model):
 				return contract_ids_sorted_by_date_start[-1].date_end
 
 	date_entry = fields.Date('Fecha de Ingreso',default=lambda self: self._default_entry_bl())
-	date_end = fields.Date('Fecha de Salida',default=_default_end_bl)
+	date_out = fields.Date('Fecha de Salida',default=_default_end_bl)

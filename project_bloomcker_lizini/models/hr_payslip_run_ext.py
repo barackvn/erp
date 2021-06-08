@@ -558,7 +558,13 @@ class HrPayslipRun(models.Model):
 			query = 'select %s from planilla_tabular' % (','.join(fields))
 			record.env.cr.execute(query)
 			datos_planilla = record.env.cr.fetchall()
-			range_row = len(datos_planilla[0] if len(datos_planilla) > 0 else 0)
+			####################################### Cambios nuevos
+			#range_row = len(datos_planilla[0] if len(datos_planilla) > 0 else 0)
+			try:
+				range_row=len(datos_planilla[0])
+			except:
+				range_row=0
+			#######################################################
 			total_essalud = 0
 			for i in range(len(datos_planilla)):
 				for j in range(range_row):
@@ -576,8 +582,10 @@ class HrPayslipRun(models.Model):
 
 			for j in range(5, len(datos_planilla_transpuesta)):
 				worksheet.write(x, j, sum([float(d) for d in datos_planilla_transpuesta[j]]), styleFooterSum)
-
-			worksheet.write(x,j+1,total_essalud,styleFooterSum)
+			try:
+				worksheet.write(x,j+1,total_essalud,styleFooterSum)
+			except:
+				continue
 
 			# seteando tamaño de columnas
 			col_widths = record.get_col_widths(datos_planilla)

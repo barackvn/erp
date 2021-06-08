@@ -1,18 +1,4 @@
 <odoo>
-    <!--Vistas de los botones-->>
-    <record id="hr_payslip_run_ext_buttons" model="ir.ui.view">
-        <field name="name">hr_payslip_run_ext_buttons</field>
-        <field name="model">hr.payslip.run</field>
-        <field name="inherit_id" ref="planilla.hr_payslip_run_inherit_form"/>
-        <field name="arch" type="xml">
-            <xpath expr="//form/header/button[@name='exportar_planilla_tabular_xlsx']" position="after">
-                <button name="exportar_planilla_tabular_total_xlsx" string="Exportar excel sumarizado" type="object" class="fa fa-file-text-o" states="draft"/>
-                <button name="genera_planilla_afp_net_sumarizada" string="Exportar afp sumarizado" type="object" class="fa fa-file-text-o" states="draft"/>
-                <button name="exportar_plame_sumarizado" string="Exportar Plame sumarizado" type="object" class="fa fa-file-text-o" states="draft"/>
-            </xpath>
-        </field>
-    </record>
-
     <!--Nomina-->
     <record id="planilla_exportar_nomina_total_excel" model="ir.actions.server">
         <field name="name">Exportar Nómina Sumarizada Excel</field>

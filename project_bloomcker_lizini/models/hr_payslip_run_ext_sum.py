@@ -88,8 +88,12 @@ class HrPayslipRunSum(models.Model):
 				for i in range(1, len(header_planilla_tabular)):
 					if i not in (3,4):
 						totalsheet.write(x, i, header_planilla_tabular[i].field_description, boldbord)
-				totalsheet.write(x,i+1,'Aportes ESSALUD',boldbord)
-				totalsheet.write(x,i+2,'Fecha de ingreso',boldbord)
+				try:
+					totalsheet.write(x,i+1,'Aportes ESSALUD',boldbord)
+				except:
+					continue
+				totalsheet.write(x,3,'Fecha de ingreso',boldbord)
+				totalsheet.write(x,4,'Fecha de retiro',boldbord)
 				totalsheet.set_row(x, 50)
 				fields = ['\"'+column.name+'\"' for column in header_planilla_tabular]
 				first=False
@@ -97,20 +101,29 @@ class HrPayslipRunSum(models.Model):
 			query = 'select %s from planilla_tabular' % (','.join(fields))
 			record.env.cr.execute(query)
 			datos_planilla = record.env.cr.fetchall()
-			range_row = len(datos_planilla[0] if len(datos_planilla) > 0 else 0)
+			####################################### Cambios nuevos
+			#range_row = len(datos_planilla[0] if len(datos_planilla) > 0 else 0)
+			try:
+				range_row=len(datos_planilla[0])
+			except:
+				range_row=0
+			#######################################################
 			
 			for i in range(len(datos_planilla)):	#empleado a procesar
 				if datos_planilla[i][1] in procesados:
 					continue
 				employee=record.env['hr.employee'].search([['name','like',datos_planilla[i][0]]])
 				procesados.append(datos_planilla[i][1])
-				data=[0.0 for f in range(range_row+2)]
+				data=[0.0 for f in range(range_row+1)]
+				fechas=['','']
 				for k in range(3):
 					data[k]=(datos_planilla[i][k] if datos_planilla[i][k] else '0.00')
+
 				if employee.date_entry:
-					data[range_row+1]=employee.date_entry
-				else:
-					data[range_row+1]=''
+					fechas[0]=employee.date_entry
+
+				if employee.date_out:
+					fechas[1]=employee.date_out
 
 				for nomina in self:					#recorrido para encontrar todas sus entradas en todas las nominas
 					nomina.env['planilla.planilla.tabular.wizard'].reconstruye_tabla(record.date_start,record.date_end)
@@ -130,8 +143,9 @@ class HrPayslipRunSum(models.Model):
 						break
 				x+=1
 				for i in range(len(data)):
-					totalsheet.write(x, i, data[i], numberdos if type(data)==(type(0) or type(0.0)) else formatLeft)		
-		
+					totalsheet.write(x, i, data[i], numberdos if type(data)==(type(0) or type(0.0)) else formatLeft)
+				totalsheet.write(x, 3, fechas[0], formatLeft)
+				totalsheet.write(x, 4, fechas[1], formatLeft)			
 		x = x + 2
 
 		for j in range(5, len(total)):
@@ -144,8 +158,8 @@ class HrPayslipRunSum(models.Model):
 		for i in range(2, len(col_widths)):
 			totalsheet.set_column(i, i, col_widths[i])
 		
-		totalsheet.set_column('D:D',None,None,{'hidden':True})
-		totalsheet.set_column('E:E',None,None,{'hidden':True})	
+		#totalsheet.set_column('D:D',None,None,{'hidden':True})
+		#totalsheet.set_column('E:E',None,None,{'hidden':True})	
 
 		workbook.close()
 		f = open(direccion+'planilla_tabular.xls', 'rb')
