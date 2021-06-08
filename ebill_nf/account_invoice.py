@@ -98,8 +98,6 @@ class account_invoice(models.Model):
 
 		ctx["default_attachment_ids"]= []
 		attachment_ids = self.env["ir.attachment"].sudo().search([('res_id','=',self.id),('res_model','=','account.invoice')])
-		_logger.info(attachment_ids)
-
 
 		if len(attachment_ids) > 0:
 			for attachment in attachment_ids:
@@ -215,6 +213,40 @@ class account_invoice(models.Model):
 		return res
 
 	@api.multi
+	def consultar_comprobante(self):
+		company = self[0].env.user.company_id
+		parametros = self.env['main.parameter'].search([])[0]
+		serie = self.env['serial.nubefact'].search([('serial_id','=',self[0].serie_id.id)])
+		for self_act in self:
+			tdoc = str(int(self_act.serie_id.type_document_id.code))
+			if tdoc=='3':
+				tdoc = '2'
+			if tdoc=='7':
+				tdoc ='3'
+			if tdoc=='8':
+				tdoc = '4'
+			head_json = {
+				"operacion": "consultar_comprobante",
+				"tipo_de_comprobante": tdoc,
+				"serie": str(self_act.reference[0:4]),
+				"numero": int(self_act.reference[5:])
+				}
+
+			jsonarray = json.dumps(head_json,indent=4)
+			req = urllib2.Request(serie[0].path_nf)
+			req.add_header('Content-Type', 'application/json')
+			req.add_header('Authorization', 'Token token="'+serie[0].token_nf+'"')
+
+			try:
+				response = urllib2.urlopen(req, jsonarray)
+			except urllib2.HTTPError as e:
+				raise osv.except_osv('Error al procesar datos de factura electrónica', e.read())
+			respuesta = json.load(response)
+			_logger.info(respuesta)
+			self_act.update({'url_pdf':respuesta['enlace_del_pdf'],'url_xml':respuesta['enlace_del_xml'],'url_cdr':respuesta['enlace_del_cdr']})
+			return True
+
+	@api.multi
 	def make_einvoice(self):
 		company = self[0].env.user.company_id
 		parametros = self.env['main.parameter'].search([])[0]
@@ -259,9 +291,13 @@ class account_invoice(models.Model):
 					if tdoc_1=='8':
 						tdoc_1 = '4'
 					documento_que_se_modifica_tipo=tdoc_1
-					d= docbase.comprobante.split('-')
-					documento_que_se_modifica_serie=d[0]
-					documento_que_se_modifica_numero=d[1]
+					_logger.info('documento_que_se_modifica_tipo')
+					_logger.info(documento_que_se_modifica_tipo)
+					_logger.info(type(docbase.comprobante))
+					_logger.info(docbase.comprobante)
+					d = docbase.comprobante
+					documento_que_se_modifica_serie=str(d[0:4])
+					documento_que_se_modifica_numero=int(d[5:])
 				tdoc = str(int(self_act.serie_id.type_document_id.code))
 				if tdoc=='3':
 					tdoc = '2'

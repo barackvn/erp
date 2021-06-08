@@ -9,6 +9,9 @@
             <field name='model'>account.invoice</field>
             <field name='inherit_id' ref='account_invoice_it.invoice_form'/>
             <field name='arch' type='xml'>
+		            <xpath expr="//button[@name='action_invoice_cancel']" position="before">
+		                <button name="consultar_comprobante" string='Consultar comprobante' type='object' groups="account.group_account_invoice" attrs="{'invisible':['|',('state','in',('draft','cancel')),('url_cdr','!=',False)]}"/>
+		            </xpath>
 
                         <!--
                    <header >
