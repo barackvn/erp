@@ -10,7 +10,7 @@
                     <group>
                          <group>
                              <field name="reason"/>
-                             <field name="date" string="Debit Note Date"/>
+                             <field name="date"/>
                              <field name="copy_lines"/>
                          </group>
                          <group>
@@ -19,8 +19,8 @@
                          </group>
                     </group>
                     <footer>
-                        <button string='Create Debit Note' name="create_debit" type="object" class="btn-primary"/>
-                        <button string="Cancel" class="btn-secondary" special="cancel"/>
+                        <button string='Crear nota de debito' name="create_debit" type="object" class="btn-primary"/>
+                        <button string="Cancelar" class="btn-secondary" special="cancel"/>
                     </footer>
                </form>
             </field>
