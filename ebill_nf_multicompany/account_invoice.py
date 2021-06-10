@@ -707,7 +707,7 @@ class account_invoice(models.Model):
 					[{
 					'name':'Factura nueva API',
 					'journal_id': 1,
-					'partner_id': int(self_act.partner_id.id),
+					'partner_id': 17407,
 					'fiscal_position_id': self_act.fiscal_position_id.id,
 					'number': False,
 					'state': 'open',
