@@ -268,6 +268,8 @@ class account_invoice(models.Model):
 		company = self[0].env.user.company_id
 		parametros = self.env['main.parameter'].search([])[0]
 		serie = self.env['serial.nubefact'].search([('serial_id','=',self[0].serie_id.id)])
+
+
 		if len(serie)==0:
 			return
 		if self[0].journal_id.type == 'sale' or self[0].journal_id.type == 'sale_refund':
@@ -340,6 +342,16 @@ class account_invoice(models.Model):
 
 				# raise osv.except_osv('Error!', item)
 				indice =0
+
+				url = self_act.empresa.url_base
+				db = self_act.empresa.db
+				username = 'admin'
+				password = '1234'
+
+				common = xmlrpclib.ServerProxy('{}/xmlrpc/2/common'.format(url))
+				uid = common.authenticate(db, username, password, {})
+
+				models = xmlrpclib.ServerProxy('{}/xmlrpc/2/object'.format(url))
 
 				for linea in self_act.invoice_line_ids:
 
@@ -555,13 +567,34 @@ class account_invoice(models.Model):
 				if len(ocompra)>20:
 					ocompra=ocompra[:20]
 
+				# SERIE DE LA COMPAÑIA RECEPTOR
+				serie = models.execute_kw(db, uid, password,'it.invoice.serie', 'search_read',[[['name', '=', self_act.serie_id.name], ['type_document_id', '=', self_act.serie_id.type_document_id.id]]],
+										{'fields': ['name', 'type_document_id', 'sequence_id','description'], 'limit': 5})
+				_logger.info('serie')
+				_logger.info(serie)
 
-				type(self_act.reference[0:4])
+				if len(serie) == 0:
+					raise osv.except_osv('Error!', u"No se encontro una serie con esa descripcion y tipo, por favor verifique en la compañía destino si la serie existe.")
+
+				sequence_id = serie[0]['sequence_id'][0]
+
+				sequence = models.execute_kw(db, uid, password,'ir.sequence', 'search_read',[[['id', '=', int(sequence_id)]]],
+										{'fields': ['prefix', 'number_next_actual', 'padding'], 'limit': 1})
+				_logger.info('sequence')
+				_logger.info(sequence)
+
+				sequence_obj = sequence[0]
+				next_number = sequence_obj['number_next_actual']
+				prefix = sequence_obj['prefix']
+				padding = sequence_obj['padding']
+				reference = prefix + "0"*(padding - len(str(next_number))) + str(next_number)
+				_logger.info(reference)
+
 				head_json = {
 					"operacion": "generar_comprobante",
 					"tipo_de_comprobante": tdoc,
-					"serie": str(self_act.reference[0:4]),
-					"numero": int(self_act.reference[5:]),
+					"serie": str(reference[0:4]),
+					"numero": int(reference[5:]),
 					"sunat_transaction": str(sunat_transaction),
 					"cliente_tipo_de_documento": str(int(self_act.commercial_partner_id.type_document_partner_it.code)),
 					"cliente_numero_de_documento": str(self_act.commercial_partner_id.nro_documento),
@@ -639,47 +672,13 @@ class account_invoice(models.Model):
 				req.add_header('Content-Type', 'application/json')
 				req.add_header('Authorization', 'Token token="'+self_act.empresa.token+'"')
 
-				url = self_act.empresa.url_base
-				db = self_act.empresa.db
-				username = 'admin'
-				password = '1234'
-				_logger.info(url)
-				common = xmlrpclib.ServerProxy('{}/xmlrpc/2/common'.format(url))
-				uid = common.authenticate(db, username, password, {})
+				# Busqueda del partner id
+				partner_id = models.execute_kw(db, uid, password,'res.partner', 'search',[[['nro_documento', '=', self_act.partner_id.nro_documento]]])
+				_logger.info('partner_id')
+				_logger.info(partner_id)
 
-				models = xmlrpclib.ServerProxy('{}/xmlrpc/2/object'.format(url))
-
-				_logger.info(self_act.journal_id.name)
-				_logger.info(self_act.reference)
-
-				# invoice = {
-				# 'name': form.reason,
-				# 'type': inv.type,
-				# 'date_invoice': form.date,
-				# 'state': 'draft',
-				# 'reference':reference,
-				# 'number': False,
-				# 'origin': inv.origin,
-				# 'account_ids':related_documents,
-				# 'it_type_document': it_type_document.id,
-				# 'serie_id': form.serie_id.id,
-				# 'journal_id': inv.journal_id.id,
-				# 'partner_id': inv.partner_id.id,
-				# 'fiscal_position_id': inv.fiscal_position_id.id,
-				# 'invoice_line_ids': invoice_lines_ids,
-				# 'debit_invoice_type': form.debit_invoice_type.id
-				# }
-
-					# [{
-					# 'name':'Factura nueva',
-					# 'date_invoice': '2021-06-09',
-					# 'journal_id': 1,
-					# 'partner_id': 20,
-					# 'fiscal_position_id': False,
-					# 'state': 'draft',
-					# 'type': 'out_invoice',
-					# 'it_type_document': 9,
-					# }])
+				if len(partner_id) == 0:
+					raise osv.except_osv('Error!', u"No se encontro ni un cliente con este numero de documento, por favor verifique en la compañía destino si el cliente existe.")
 
 				try:
 					response = urllib2.urlopen(req, jsonarray)
@@ -687,40 +686,48 @@ class account_invoice(models.Model):
 					raise osv.except_osv('Error al procesar datos de factura electrónica', e.read())
 				respuesta = json.load(response)
 				_logger.info(respuesta)
+				if respuesta:
+					invoice_lines_ids=[]
 
-				invoice_lines_ids=[]
+					for invoice_line in self_act.invoice_line_ids:
+						invoice_line_dict = {
+							'quantity':invoice_line.quantity,
+							'name': invoice_line.name,
+							'price_unit': invoice_line.price_unit,
+							'account_id': invoice_line.account_id.id,
+							'product_id': invoice_line.product_id.id if invoice_line.product_id else False,
+							'invoice_line_tax_ids': [(6, 0, [invoice_line.invoice_line_tax_ids[0].id])],
+						}
+						invoice_lines_ids.append((0,0,invoice_line_dict))
+					_logger.info('invoice_lines_ids')
+					_logger.info(invoice_lines_ids)
 
-				for invoice_line in self_act.invoice_line_ids:
-					invoice_line_dict = {
-						'quantity':invoice_line.quantity,
-						'name': invoice_line.name,
-						'price_unit': invoice_line.price_unit,
-						'account_id': invoice_line.account_id.id,
-						'product_id': invoice_line.product_id.id if invoice_line.product_id else False,
-						'invoice_line_tax_ids': [(6, 0, [invoice_line.invoice_line_tax_ids[0].id])],
-					}
-					invoice_lines_ids.append((0,0,invoice_line_dict))
-				_logger.info('invoice_lines_ids')
-				_logger.info(self_act.partner_id.id)
-				_logger.info(invoice_lines_ids)
-				models.execute_kw(db, uid, password, 'account.invoice', 'create',
-					[{
-					'name':'Factura nueva API',
-					'journal_id': 1,
-					'partner_id': 17407,
-					'fiscal_position_id': self_act.fiscal_position_id.id,
-					'number': False,
-					'state': 'open',
-					'type':  self_act.type,
-					'it_type_document': self_act.it_type_document.id,
-					'serie_id': self_act.serie_id.id,
-					'date_invoice': self_act.date_invoice,
-					'invoice_line_ids': invoice_lines_ids,
-					'hash_ebill': respuesta['codigo_hash'],
-					'url_pdf':respuesta['enlace_del_pdf'],
-					'url_xml':respuesta['enlace_del_xml'],
-					'url_cdr':respuesta['enlace_del_cdr']
-					}])
+
+					invoice_id = models.execute_kw(db, uid, password, 'account.invoice', 'create',
+													[{
+													'name':'Factura nueva API',
+													'journal_id': 1,
+													'partner_id': partner_id[0],
+													'fiscal_position_id': self_act.fiscal_position_id.id,
+													'number': reference,
+													'reference': reference,
+													'state': 'open',
+													'type':  self_act.type,
+													'it_type_document': self_act.it_type_document.id,
+													'serie_id': self_act.serie_id.id,
+													'date_invoice': self_act.date_invoice,
+													'invoice_line_ids': invoice_lines_ids,
+													'hash_ebill': respuesta['codigo_hash'],
+													'url_pdf':respuesta['enlace_del_pdf'],
+													'url_xml':respuesta['enlace_del_xml'],
+													'url_cdr':respuesta['enlace_del_cdr']
+													}])
+					_logger.info('invoice_id')
+					_logger.info(invoice_id)
+
+				# models.execute_kw(db, uid, password, 'account.invoice', 'write', [[invoice_id], {
+				# }])
+
 				return (respuesta['codigo_hash'],respuesta['enlace_del_pdf'],respuesta['cadena_para_codigo_qr'],respuesta['enlace_del_xml'],respuesta['enlace_del_cdr'])
 		return False
 
