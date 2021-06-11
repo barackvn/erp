@@ -48,6 +48,9 @@
                     <field name="credit_invoice_type" attrs="{'invisible':[('type','=','out_invoice')],'required':[('type','=','out_refund')]}" />
                     <field name="debit_invoice_type" attrs="{'invisible':[('type','!=','out_invoice')]}"/>
                 </field>
+		            <xpath expr="//field[@name='reference']" position="replace">
+		                <field name="reference" invisible="True"/>
+		            </xpath>
                  <field name="code_operation" position="before">
                     <field name="have_detraction"/>
                 </field>

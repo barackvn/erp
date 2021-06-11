@@ -577,7 +577,7 @@ class account_invoice(models.Model):
 					raise osv.except_osv('Error!', u"No se encontro una serie con esa descripcion y tipo, por favor verifique en la compañía destino si la serie existe.")
 
 				sequence_id = serie[0]['sequence_id'][0]
-
+				serie_id = serie[0]['id']
 				sequence = models.execute_kw(db, uid, password,'ir.sequence', 'search_read',[[['id', '=', int(sequence_id)]]],
 										{'fields': ['prefix', 'number_next_actual', 'padding'], 'limit': 1})
 				_logger.info('sequence')
@@ -590,6 +590,8 @@ class account_invoice(models.Model):
 				reference = prefix + "0"*(padding - len(str(next_number))) + str(next_number)
 				_logger.info(reference)
 
+				self_act.write({'reference':reference})
+				self_act.write({'number':reference})
 				head_json = {
 					"operacion": "generar_comprobante",
 					"tipo_de_comprobante": tdoc,
@@ -714,7 +716,7 @@ class account_invoice(models.Model):
 													'state': 'open',
 													'type':  self_act.type,
 													'it_type_document': self_act.it_type_document.id,
-													'serie_id': self_act.serie_id.id,
+													'serie_id': int(serie_id),
 													'date_invoice': self_act.date_invoice,
 													'invoice_line_ids': invoice_lines_ids,
 													'hash_ebill': respuesta['codigo_hash'],
@@ -725,8 +727,11 @@ class account_invoice(models.Model):
 					_logger.info('invoice_id')
 					_logger.info(invoice_id)
 
-				# models.execute_kw(db, uid, password, 'account.invoice', 'write', [[invoice_id], {
-				# }])
+
+
+				models.execute_kw(db, uid, password, 'ir.sequence', 'write', [[sequence_obj['id']], {
+					'number_next_actual': next_number+1
+				}])
 
 				return (respuesta['codigo_hash'],respuesta['enlace_del_pdf'],respuesta['cadena_para_codigo_qr'],respuesta['enlace_del_xml'],respuesta['enlace_del_cdr'])
 		return False
