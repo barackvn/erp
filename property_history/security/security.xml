@@ -1,0 +1,23 @@
+<odoo>
+    <data>
+      <record id="model_access_property_history" model="ir.rule">
+          <field name="name">model.access.property.history</field>
+          <field name="model_id" ref="property_history.model_property_history"/>
+          <field name="global" eval="True"/>
+          <field name="perm_read" eval="1"/>
+          <field name="perm_create" eval="1"/>
+          <field name="perm_write" eval="1"/>
+          <field name="perm_unlink" eval="1"/>
+          <field name="groups" eval="[(4, ref('property_management.group_property_user'))]"/>
+      </record>
+      <record id="model_access_property_history_access" model="ir.model.access">
+          <field name="name">model.access.property.history.access</field>
+          <field name="group_id" ref="base.group_user"/>
+          <field name="model_id" ref="property_history.model_property_history"/>
+          <field name="perm_read" eval="1"/>
+          <field name="perm_create" eval="1"/>
+          <field name="perm_write" eval="1"/>
+          <field name="perm_unlink" eval="1"/>
+      </record>
+    </data>
+</odoo>

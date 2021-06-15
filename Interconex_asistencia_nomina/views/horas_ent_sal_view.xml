@@ -1,0 +1,26 @@
+<odoo>
+    <record id="horas_ent_sal_tree_view_inherit" model="ir.ui.view">
+        <field name="name">horas_ent_sal_tree_view_inherit</field>
+        <field name="model">hr.employee</field>
+        <field name="inherit_id" ref="hr.view_employee_tree"/>
+        <field name="arch" type="xml">
+            <xpath expr='//tree/field[@name="work_phone"]' position="before">
+                <field name="hora_ent_fija"/>
+                <field name="hora_sal_fija"/>
+            </xpath>
+        </field>
+    </record>
+
+
+    <record id="horas_ent_sal_form_view_inherit" model="ir.ui.view">
+        <field name="name">horas_ent_sal_form_view_inherit</field>
+        <field name="model">hr.employee</field>
+        <field name="inherit_id" ref="hr.view_employee_form"/>
+        <field name="arch" type="xml">
+            <xpath expr='//field[@name="work_phone"]' position="after">
+                <field name="hora_ent_fija"/>
+                <field name="hora_sal_fija"/>
+            </xpath>
+        </field>
+    </record>
+</odoo>

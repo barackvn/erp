@@ -9,11 +9,14 @@
             <field name='model'>account.invoice</field>
             <field name='inherit_id' ref='account_invoice_it.invoice_form'/>
             <field name='arch' type='xml'>
+		            <xpath expr="//button[@name='action_invoice_cancel']" position="before">
+		                <button name="consultar_comprobante" string='Consultar comprobante' type='object' groups="account.group_account_invoice" attrs="{'invisible':['|',('state','in',('draft','cancel')),('url_cdr','!=',False)]}"/>
+		            </xpath>
 
                         <!--
-                   <header > 
+                   <header >
 
-                    <button string="Cancelar Fact. Elect."  name="cancel_eletronico_button" confirm="Esta seguro de enviar la Anulación a Sunat?" type="object" class="oe_highlight"/> 
+                    <button string="Cancelar Fact. Elect."  name="cancel_eletronico_button" confirm="Esta seguro de enviar la Anulación a Sunat?" type="object" class="oe_highlight"/>
 
                     </header> -->
 
@@ -39,7 +42,8 @@
                 <field name="date_due" position="after">
                     <field name = "hash_ebill" readonly="1"/>
                     <field name = "url_pdf" readonly="1" widget="url"/>
-                    <field name = "url_pdf2" readonly="1" widget="url"/>
+                    <field name = "url_xml" readonly="1" widget="url"/>
+                    <field name = "url_cdr" readonly="1" widget="url"/>
                 </field>
                 <field name="reference" position="after">
                     <field name="credit_invoice_type" attrs="{'invisible':[('type','=','out_invoice')],'required':[('type','=','out_refund')]}" />

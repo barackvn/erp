@@ -1,0 +1,121 @@
+<odoo>
+
+	<!-- Tenant Partner Search View  -->
+	<record id="property_history_view_search" model="ir.ui.view">
+		<field name="name">property.history.search</field>
+		<field name="model">property.history</field>
+		<field name="arch" type="xml">
+			<search string="Search Tenant">
+				<filter string="Active" name="active" domain="[('active','=',True)]"/>
+				<field name="activo"/>
+				<field name="propietario"/>
+				<field name="fecha"/>
+				<newline/>
+				<group expand="0" string="Group By..." colspan="4" col="10">
+					<filter string="Tenant Company" icon="terp-personal" domain="[]" context="{'group_by':'propietario'}"/>
+					<filter string="activo" context="{'group_by': 'activo'}"/>
+					<filter string="Propietario" context="{'group_by': 'propietario'}"/>
+				</group>
+			</search>
+		</field>
+	</record>
+
+	<!--Action For Property Tenancy -->
+	<record model="ir.actions.act_window" id="action_property_history_view">
+		<field name="name">Property History</field>
+		<field name="type">ir.actions.act_window</field>
+		<field name="res_model">property.history</field>
+		<field name="view_type">form</field>
+		<field name="view_mode">tree,form</field>
+		<field name="search_view_id" ref="property_history_view_search"/>
+	</record>
+
+
+		<!--Property Tenancy Form View -->
+		<record id="property_history_view_form" model="ir.ui.view">
+			<field name="name">property.history.view.form</field>
+			<field name="model">property.history</field>
+			<field name="arch" type="xml">
+				<form string="Tenancy Details">
+					<sheet>
+						<group colspan="2">
+							<group colspan='4' col='4'>
+								<field name="activo" />
+								<field name="propietario"/>
+								<field name="fecha" />
+								<field name="inquilino" />
+								<field name="moneda" />
+							</group>
+							<group colspan="4" col="4">
+								<field name="glosa1"/>
+								<field name="glosa2" />
+							</group>
+						</group>
+					</sheet>
+				</form>
+			</field>
+		</record>
+
+
+	<!--Property Tenancy Tree View -->
+	<record id="property_history_view_tree" model="ir.ui.view">
+		<field name="name">property.history.view.tree</field>
+		<field name="model">property.history</field>
+		<field name="arch" type="xml">
+			<tree string="Property History Sales" create="true">
+				<field name="activo" />
+				<field name="propietario"/>
+				<field name="fecha"/>
+				<field name="inquilino" />
+				<field name="moneda" />
+				<field name="factura" />
+				<field name="glosa1" />
+				<field name="glosa2" />
+				<field name="gfa_meter" />
+				<field name="costoporm2" />
+				<field name="valvta"/>
+				<field name="inavta" />
+				<field name="igvvta" />
+				<field name="totvta" />
+			</tree>
+		</field>
+	</record>
+
+
+	<!--Action For Property Tenancy Form view -->
+	<record id="action_history_form_view" model="ir.actions.act_window.view">
+		<field eval="2" name="sequence" />
+		<field name="view_mode">form</field>
+		<field name="view_id" ref="property_history_view_form" />
+		<field name="act_window_id" ref="action_property_history_view" />
+	</record>
+
+	<!--Action For Property Tenancy Tree View -->
+	<record id="action_history_tree_view" model="ir.actions.act_window.view">
+		<field eval="1" name="sequence" />
+		<field name="view_mode">tree</field>
+		<field name="view_id" ref="property_history_view_tree" />
+		<field name="act_window_id" ref="action_property_history_view" />
+	</record>
+
+
+	<!--Property Tenancy Menu -->
+	<menuitem
+		id="menu_property_history"
+		name="Property history"
+		parent="property_management.menu_property_main"
+		sequence="1"
+		/>
+
+
+	<menuitem name="Property History Rent" id="menu_tenancy" parent="menu_property_history"
+		action="property_history.action_property_history_view" groups="base.group_user" sequence="100" />
+
+		<record id="action_history_dashboard" model="ir.actions.client">
+			<field name="name">Dashboard History</field>
+			<field name="tag">property_history_dashboard</field>
+		</record>
+
+		<menuitem name="Dashboard" id="property_dashboard_history_menuitem" parent="menu_property_history"  groups="base.group_user" sequence="125" action="action_history_dashboard"/>
+
+</odoo>

@@ -8,7 +8,7 @@
 	'description':"""
 		Facturacion electrónica Nubefact
 	""",
-	
+
 	'auto_install': False,
 	'demo'        : [],
 	'depends'     : [
@@ -21,6 +21,7 @@
 	'data'        :	[
 					'account_journal_view.xml',
 					'account_invoice_view.xml',
+					'mail_template_data.xml',
 					'security/ir.model.access.csv'
 					],
 	'installable' : True
