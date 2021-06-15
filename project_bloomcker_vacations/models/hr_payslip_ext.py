@@ -1,4 +1,4 @@
-# -*- coding: utf-8 -*-
+# -- coding: utf-8 --
 import time
 from datetime import datetime, timedelta
 from dateutil import relativedelta
@@ -61,8 +61,6 @@ class HrPayslipExt(models.Model):
             self.monto_descanso = amount - subsidy
             self.monto_subsidio = 0 + subsidy
 
-
-
     @api.multi
     def compute_sheet(self):
         self.comisiones_aux = self.comi_promedio
@@ -74,7 +72,11 @@ class HrPayslipExt(models.Model):
 
         breaks = self.env['breaks.line.bl'].search([('employee_id', '=', self.employee_id.id), ('period', '=', self.payslip_run_id.id)])
         mother_days = self.env['hr.payslip.worked_days'].search([('payslip_id', '=', self.id), ('code', '=', 'DSUBM')], limit=1)
-        
+
+        date_start2 = datetime.strptime(self.payslip_run_id.date_start, "%Y-%m-%d")
+        date_end2 = datetime.strptime(self.payslip_run_id.date_end, "%Y-%m-%d")
+        days_total2 = abs(date_end2 - date_start2).days + 1
+
         if mother_days:
             days_mother = mother_days.number_of_days
         else:
@@ -103,11 +105,12 @@ class HrPayslipExt(models.Model):
             elif days_line.code == "FAL":
                 days_line.number_of_days = days_faults
             elif days_line.code == "DLAB":
-                days_line.number_of_days = 30 - days_total - days_break - days_faults - days_mother
+                days_line.number_of_days = days_total2 - days_total - days_break - days_faults - days_mother
 
         self.env.cr.execute("""delete from hr_payslip_line
                             where employee_id = """+str(self.employee_id.id)+""" and slip_id = """+str(self.id))
         super(HrPayslipExt, self).compute_sheet()
+         
 
     @api.multi
     def imprimir_boleta(self):

@@ -30,7 +30,7 @@ class HrPayslip(models.Model):
 
     feriados = fields.Integer("Feriados y Domingos")
     dias_calendarios = fields.Integer(
-        'Dias Calendarios')
+        string="Dias Calendarios", default=6)
 
     # variables que se usaran en la nomina
     basico = fields.Float(string='Basico', digits=(12, 2))

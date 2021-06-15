@@ -68,9 +68,9 @@ class HrPayslipRun(models.Model):
 	#FIXME: deprecado
 	@api.depends('date_start', 'date_end')
 	def _calcula_dias_calendarios(self):
-		end = self.date_end
+		#end = self.date_end
 		self.dias_calendarios = calendar.monthrange(
-			int(end[:4]), int(end[5:7]))[1]
+			2022, 5)[0]
 
 	@api.multi
 	def _wizard_generar_asiento_contable(self):
@@ -389,7 +389,7 @@ class HrPayslipRun(models.Model):
 			elif payslip.contract_id.date_start > self.date_start:
 				fecha_ini = fields.Date.from_string(payslip.contract_id.date_start)
 				if fecha_ini:
-					dias_laborados.number_of_days = 30-fecha_ini.day+1
+					dias_laborados.number_of_days = 6-fecha_ini.day+1
 			elif payslip.contract_id.date_end < self.date_end:
 				if payslip.contract_id.date_end:
 					fecha_fin = fields.Date.from_string(payslip.contract_id.date_end)
