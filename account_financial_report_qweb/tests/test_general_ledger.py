@@ -127,12 +127,15 @@ class TestGeneralLedgerReport(TransactionCase):
         general_ledger.compute_data_for_report(
             with_line_details=True, with_partners=with_partners
         )
-        lines = {}
         report_account_model = self.env['report_general_ledger_qweb_account']
-        lines['receivable'] = report_account_model.search([
-            ('report_id', '=', general_ledger.id),
-            ('account_id', '=', self.receivable_account.id),
-        ])
+        lines = {
+            'receivable': report_account_model.search(
+                [
+                    ('report_id', '=', general_ledger.id),
+                    ('account_id', '=', self.receivable_account.id),
+                ]
+            )
+        }
         lines['income'] = report_account_model.search([
             ('report_id', '=', general_ledger.id),
             ('account_id', '=', self.income_account.id),

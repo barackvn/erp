@@ -14,13 +14,12 @@ class account_move_line(models.Model):
 		"""
 		self.mapped('analytic_line_ids').unlink()
 		for obj_line in self:
-			if obj_line.analytic_account_id:				
+			if obj_line.analytic_account_id:		
 				vals_line = obj_line._prepare_analytic_line()[0]
 				if obj_line.analytic_account_id.distribucion_analitica:
 					total = vals_line['amount']
 					resto = vals_line['amount']
-					cont = 1
-					for ele in obj_line.analytic_account_id.detalle_distribucion:
+					for cont, ele in enumerate(obj_line.analytic_account_id.detalle_distribucion, start=1):
 						other = {
 							'name':vals_line['name'],
 							'date':vals_line['date'],
@@ -35,7 +34,6 @@ class account_move_line(models.Model):
 							'move_id':vals_line['move_id'],
 							'user_id':vals_line['user_id']
 						}
-						cont += 1
 						resto += -(round((vals_line['amount']*ele.porcentaje) / 100.0,2))
 						self.env['account.analytic.line'].create(other)
 				else:

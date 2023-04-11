@@ -70,7 +70,7 @@ class account_bank_statement_line(models.Model):
 	def process_reconciliation(self, counterpart_aml_dicts=None, payment_aml_rec=None, new_aml_dicts=None):
 		t = super(account_bank_statement_line,self).process_reconciliation(counterpart_aml_dicts, payment_aml_rec, new_aml_dicts)
 		for i in t:
-			for elem in i.line_ids:
+			for _ in i.line_ids:
 				i.flujo_caja_id = self.flujo_caja_id.id
 		return t
 
@@ -81,9 +81,7 @@ class reporte_flujo_caja_wizard(models.Model):
 	@api.model
 	def _getCuentas(self):
 		self.env.cr.execute(""" select id from account_account where code like '10%' """)
-		arrays = []
-		for i in self.env.cr.fetchall():
-			arrays.append(i[0])
+		arrays = [i[0] for i in self.env.cr.fetchall()]
 		return [('id','in',arrays)]
 
 	anio_fiscal = fields.Many2one('account.fiscalyear','Año Fiscal')
@@ -92,8 +90,7 @@ class reporte_flujo_caja_wizard(models.Model):
 	@api.multi
 	def do_rebuild(self):
 		ctas_txt = [0,0,0,0,0]
-		for i in self.cuentas:
-			ctas_txt.append(i.id)
+		ctas_txt.extend(i.id for i in self.cuentas)
 		ctas_txt = str(tuple(ctas_txt))
 		import io
 		from xlsxwriter.workbook import Workbook
@@ -102,7 +99,7 @@ class reporte_flujo_caja_wizard(models.Model):
 		#workbook = Workbook(output, {'in_memory': True})
 		direccion = self.env['main.parameter'].search([])[0].dir_create_file
 
-		workbook = Workbook( direccion + 'tempo_account_move_lineflujocaja.xlsx')
+		workbook = Workbook(f'{direccion}tempo_account_move_lineflujocaja.xlsx')
 		worksheet = workbook.add_worksheet("Reporte Flujo Caja")
 		bold = workbook.add_format({'bold': True})
 		normal = workbook.add_format()
@@ -114,8 +111,8 @@ class reporte_flujo_caja_wizard(models.Model):
 		bord = workbook.add_format()
 		bord.set_border(style=1)
 		numberdos.set_border(style=1)
-		numbertres.set_border(style=1)			
-		x= 6				
+		numbertres.set_border(style=1)
+		x= 6
 		tam_col = [12,12,12,12,12,12,12,12,12,12,12,12,12,12,12,12,12,12,12,12,12,12,12,12,12,12,12,12,12,12,12,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0]
 		tam_letra = 1.1
 		import sys
@@ -153,14 +150,11 @@ class reporte_flujo_caja_wizard(models.Model):
 		todos_los_elementos = [['SALDO INICIAL','']]
 
 		y = 1
-		x=7
 		worksheet.write(6,y, 'Saldo Inicial' ,normal)
 
-		for il in self.env['flujo.caja.it'].search([]).sorted(key=lambda r: r.orden):
+		for x, il in enumerate(self.env['flujo.caja.it'].search([]).sorted(key=lambda r: r.orden), start=7):
 			todos_los_elementos.append([il.rubro,il.grupo])
 			worksheet.write(x,y, il.rubro ,normal)
-			x+=1
-
 		for line in meses:
 			x = 6
 			y+=1
@@ -168,9 +162,10 @@ class reporte_flujo_caja_wizard(models.Model):
 
 			for elementos in todos_los_elementos:
 
-				total_line = 0				
+				total_line = 0
 				if elementos[0] == 'SALDO INICIAL':
-					self.env.cr.execute("""
+					self.env.cr.execute(
+						"""
 						select sum(total) from (
 						select sum(aml.debit - aml.credit) as total from
 						account_move am
@@ -178,8 +173,13 @@ class reporte_flujo_caja_wizard(models.Model):
 						LEFT join flujo_caja_it fc on fc.id = aml.flujo_caja_id
 						inner join account_account aa on aa.id = aml.account_id
 						inner join account_period ap on coalesce(ap.special,false) = coalesce(am.fecha_special,false) and am.fecha_contable >= ap.date_start and am.fecha_contable <= ap.date_stop
-						where aa.id in """+str(ctas_txt)+""" and am.state = 'posted'
-						and periodo_num(ap.code) = periodo_num('""" + '00/' + anio  + """')
+						where aa.id in """
+						+ ctas_txt
+						+ """ and am.state = 'posted'
+						and periodo_num(ap.code) = periodo_num('"""
+						+ '00/'
+						+ anio
+						+ """')
 
 						union all 
 
@@ -189,13 +189,23 @@ class reporte_flujo_caja_wizard(models.Model):
 						inner join flujo_caja_it fc on fc.id = aml.flujo_caja_id
 						inner join account_account aa on aa.id = aml.account_id
 						inner join account_period ap on coalesce(ap.special,false) = coalesce(am.fecha_special,false) and am.fecha_contable >= ap.date_start and am.fecha_contable <= ap.date_stop
-						where aa.id in """+str(ctas_txt)+""" and am.state = 'posted'
-						and periodo_num(ap.code) < periodo_num('""" + line + anio  + """') and periodo_num(ap.code) > periodo_num('""" + '00/' + anio  + """')
+						where aa.id in """
+						+ ctas_txt
+						+ """ and am.state = 'posted'
+						and periodo_num(ap.code) < periodo_num('"""
+						+ line
+						+ anio
+						+ """') and periodo_num(ap.code) > periodo_num('"""
+						+ '00/'
+						+ anio
+						+ """')
 						)T
 
-						""")
+						"""
+					)
 				else:
-					self.env.cr.execute("""
+					self.env.cr.execute(
+						"""
 
 						select sum(aml.debit - aml.credit) as total,fc.id, fc.codigo, fc.rubro, fc.grupo, fc.orden, sum(aml.debit - aml.credit) as total from
 						account_move am
@@ -203,20 +213,28 @@ class reporte_flujo_caja_wizard(models.Model):
 						inner join flujo_caja_it fc on fc.id = aml.flujo_caja_id
 						inner join account_account aa on aa.id = aml.account_id
 						inner join account_period ap on coalesce(ap.special,false) = coalesce(am.fecha_special,false) and am.fecha_contable >= ap.date_start and am.fecha_contable <= ap.date_stop
-						where aa.id in """+str(ctas_txt)+""" and am.state = 'posted'
-						and ap.code = '""" + line + anio  + """' and fc.rubro = '""" + elementos[0] +"""'
+						where aa.id in """
+						+ ctas_txt
+						+ """ and am.state = 'posted'
+						and ap.code = '"""
+						+ line
+						+ anio
+						+ """' and fc.rubro = '"""
+						+ elementos[0]
+						+ """'
 						group by fc.id, fc.codigo, fc.rubro, fc.grupo, fc.orden
 						order by orden
-						""")
+						"""
+					)
 				element = self.env.cr.fetchall()
 				for gg_ele in element:
-					total_line = gg_ele[0] if gg_ele[0] else 0
+					total_line = gg_ele[0] or 0
 
 				all_sum += total_line
 
 				worksheet.write(x,y, total_line ,numberdos)
 				x = x +1
-			
+
 			worksheet.write(x,y, all_sum ,numberdosbold)
 
 		worksheet.set_column('A:A', tam_col[0])
@@ -242,9 +260,9 @@ class reporte_flujo_caja_wizard(models.Model):
 
 
 		workbook.close()
-		
-		f = open( direccion + 'tempo_account_move_lineflujocaja.xlsx', 'rb')
-		
+
+		f = open(f'{direccion}tempo_account_move_lineflujocaja.xlsx', 'rb')
+
 		vals = {
 			'output_name': 'FlujoCaja.xlsx',
 			'output_file': base64.encodestring(''.join(f.readlines())),		

@@ -31,13 +31,17 @@ class LeasingWizard(models.Model):
 		for c,line in enumerate(data,1):
 			line = line.split(self.separator)
 			if len(line) != 11:
-				raise UserError('El archivo solo debe tener 11 columnas por linea, la linea '+str(c)+' no cumple este requisito')
+				raise UserError(
+					f'El archivo solo debe tener 11 columnas por linea, la linea {str(c)} no cumple este requisito'
+				)
 		for c,line in enumerate(data,1):
 			line = line.split(self.separator)
 			try:
 				fecha = datetime.strptime(line[1],"%Y-%m-%d")
 			except:
-				raise UserError("El formato de fecha debe ser el siguiente 'yyyy-mm-dd' en la linea "+str(c))
+				raise UserError(
+					f"El formato de fecha debe ser el siguiente 'yyyy-mm-dd' en la linea {str(c)}"
+				)
 			vals = {
 					'nro_cuota':int(line[0]),
 					'fecha':fecha,
@@ -55,6 +59,6 @@ class LeasingWizard(models.Model):
 			try:
 				self.env['account.leasing.line'].create(vals)
 			except:
-				raise UserError('Hay un error en la linea '+str(c))
-			#self.env['account.prestamo'].browse(self._context['active_id']).prestamo_line.refresh()
+				raise UserError(f'Hay un error en la linea {str(c)}')
+				#self.env['account.prestamo'].browse(self._context['active_id']).prestamo_line.refresh()
 		return {}

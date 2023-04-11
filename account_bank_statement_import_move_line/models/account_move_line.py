@@ -17,7 +17,7 @@ class AccountMoveLine(models.Model):
             amount = self.debit
         elif self.credit > 0:
             amount = -self.credit
-        vals = {
+        return {
             'name': self.name or '?',
             'amount': amount,
             'partner_id': self.partner_id.id,
@@ -26,8 +26,7 @@ class AccountMoveLine(models.Model):
             'date': self.date_maturity,
             'amount_currency': self.amount_currency,
             'currency_id': self.currency_id.id,
-            }
-        return vals
+        }
 
     @api.multi
     def create_statement_line_from_move_line(self, statement):

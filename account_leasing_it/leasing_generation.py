@@ -39,54 +39,111 @@ class LeasingGeneration(models.TransientModel):
 	@api.multi
 	def generar_factura(self):
 		parametros = self.env['main.parameter'].search([])[0]
-		error = ''
-		cantidades = []
-		devengo = []
-		error += "Falta Cuenta Capital configurada.\n" if not parametros.account_capital_id else ''
-		error += "Falta Cuenta Gatos configurada.\n" if not parametros.account_gastos_id else ''
-		error += "Falta Cuenta Comision configurada.\n" if not parametros.account_comision_id else ''
-		error += "Falta Seguro configurado.\n" if not parametros.account_seguro_id else ''
-		error += "Falta Intereses configurado.\n" if not parametros.account_intereses_id else ''
-		error += "Falta Cuenta Cargo Devengamiento configurada.\n" if not parametros.account_cargo_devengamiento_id else ''
-		error += "Falta Cuenta Abono Devengamiento configurada.\n" if not parametros.account_abono_devengamiento_id else ''
-		error += "Falta Cuenta Cargo Interes Monetario configurada.\n" if not parametros.account_cargo_interes_monetario_id else ''
-		error += "Falta Diario Asiento de Compra configurado.\n" if not parametros.journal_asiento_compra_id else ''
-		error += "Falta Tipo de Comprobante Cuotas configurada.\n" if not parametros.catalog_comprobante_cuotas_id else ''
+		error = '' + (
+			''
+			if parametros.account_capital_id
+			else "Falta Cuenta Capital configurada.\n"
+		)
+		error += (
+			''
+			if parametros.account_gastos_id
+			else "Falta Cuenta Gatos configurada.\n"
+		)
+		error += (
+			''
+			if parametros.account_comision_id
+			else "Falta Cuenta Comision configurada.\n"
+		)
+		error += '' if parametros.account_seguro_id else "Falta Seguro configurado.\n"
+		error += (
+			''
+			if parametros.account_intereses_id
+			else "Falta Intereses configurado.\n"
+		)
+		error += (
+			''
+			if parametros.account_cargo_devengamiento_id
+			else "Falta Cuenta Cargo Devengamiento configurada.\n"
+		)
+		error += (
+			''
+			if parametros.account_abono_devengamiento_id
+			else "Falta Cuenta Abono Devengamiento configurada.\n"
+		)
+		error += (
+			''
+			if parametros.account_cargo_interes_monetario_id
+			else "Falta Cuenta Cargo Interes Monetario configurada.\n"
+		)
+		error += (
+			''
+			if parametros.journal_asiento_compra_id
+			else "Falta Diario Asiento de Compra configurado.\n"
+		)
+		error += (
+			''
+			if parametros.catalog_comprobante_cuotas_id
+			else "Falta Tipo de Comprobante Cuotas configurada.\n"
+		)
 
-		if error != '':
+		if error:
 			raise UserError('Faltan las siguientes configuraciones en Contabilidad/Configuracion/Parametros/Leasings:\n\n'+error)
-		else:
-			cantidades.append([self.account_leasing_line_id.capital,parametros.account_capital_id.id,
-							parametros.tax_capital.ids if parametros.tax_capital else 0,'CUOTA DE LEASING CAPITAL'])
-			cantidades.append([self.account_leasing_line_id.gastos,parametros.account_gastos_id.id,
-							parametros.tax_gastos.ids if parametros.tax_gastos else 0,'CUOTA DE LEASING GASTOS'])
-			cantidades.append([self.account_leasing_line_id.comision,parametros.account_comision_id.id,
-							parametros.tax_comision.ids if parametros.tax_comision else 0,'CUOTA DE LEASING COMISION'])
-			cantidades.append([self.account_leasing_line_id.seguro,parametros.account_seguro_id.id,
-							parametros.tax_seguro.ids if parametros.tax_seguro else 0,'CUOTA DE LEASING SEGURO'])
-			cantidades.append([self.account_leasing_line_id.intereses,parametros.account_intereses_id.id,
-							parametros.tax_intereses.ids if parametros.tax_intereses else 0,'CUOTA DE LEASING INTERESES'])
-
-			devengo.append([self.account_leasing_line_id.intereses,parametros.account_cargo_interes_monetario_id.id])
-			devengo.append([0,parametros.account_abono_devengamiento_id.id])
-			
+		cantidades = [
+			[
+				self.account_leasing_line_id.capital,
+				parametros.account_capital_id.id,
+				parametros.tax_capital.ids if parametros.tax_capital else 0,
+				'CUOTA DE LEASING CAPITAL',
+			],
+			[
+				self.account_leasing_line_id.gastos,
+				parametros.account_gastos_id.id,
+				parametros.tax_gastos.ids if parametros.tax_gastos else 0,
+				'CUOTA DE LEASING GASTOS',
+			],
+			[
+				self.account_leasing_line_id.comision,
+				parametros.account_comision_id.id,
+				parametros.tax_comision.ids if parametros.tax_comision else 0,
+				'CUOTA DE LEASING COMISION',
+			],
+			[
+				self.account_leasing_line_id.seguro,
+				parametros.account_seguro_id.id,
+				parametros.tax_seguro.ids if parametros.tax_seguro else 0,
+				'CUOTA DE LEASING SEGURO',
+			],
+			[
+				self.account_leasing_line_id.intereses,
+				parametros.account_intereses_id.id,
+				parametros.tax_intereses.ids if parametros.tax_intereses else 0,
+				'CUOTA DE LEASING INTERESES',
+			],
+		]
+		devengo = [
+			[
+				self.account_leasing_line_id.intereses,
+				parametros.account_cargo_interes_monetario_id.id,
+			],
+			[0, parametros.account_abono_devengamiento_id.id],
+		]
 		vals = {
-			'date_invoice':self.account_leasing_line_id.fecha,
-			'partner_id':self.account_leasing_id.partner_id.id,
-			'account_id':self.account_leasing_id.partner_id.property_account_payable_id.id,
-			'journal_id':self.journal_id.id,
-			'it_type_document':parametros.catalog_comprobante_cuotas_id.id,
-			'currency_id':self.account_leasing_id.currency_id.id,
-			'reference':self.factura_cuota if self.factura_cuota else 'S.N.',
-			'check_currency_rate':True if self.tc_cuota else False,
-			'currency_rate_auto':self.tc_cuota if self.tc_cuota else 0,
-			'type':'in_invoice',
-			'leasing_line_id':self.account_leasing_line_id.id,
-			'line_identifier':'1'
+			'date_invoice': self.account_leasing_line_id.fecha,
+			'partner_id': self.account_leasing_id.partner_id.id,
+			'account_id': self.account_leasing_id.partner_id.property_account_payable_id.id,
+			'journal_id': self.journal_id.id,
+			'it_type_document': parametros.catalog_comprobante_cuotas_id.id,
+			'currency_id': self.account_leasing_id.currency_id.id,
+			'reference': self.factura_cuota or 'S.N.',
+			'check_currency_rate': bool(self.tc_cuota),
+			'currency_rate_auto': self.tc_cuota or 0,
+			'type': 'in_invoice',
+			'leasing_line_id': self.account_leasing_line_id.id,
+			'line_identifier': '1',
 		}
 		t = self.env['account.invoice'].create(vals)
 		self.account_leasing_line_id.write({'invoice_1':True})
-		for c,i in enumerate(cantidades):
+		for i in cantidades:
 			if i[0] > 0: 
 				vals_line = {
 					'name':i[3],
@@ -150,42 +207,38 @@ class LeasingGeneration(models.TransientModel):
 			t2.button_reset_taxes()
 
 		vals_asiento = {
-			'journal_id':parametros.journal_asiento_compra_id.id,
-			'partner_id':self.account_leasing_id.partner_id.id,
-			'ref':'LEASING NRO '+str(self.account_leasing_id.nro_contrato)+' - CUOTA NRO '+str(self.account_leasing_line_id.nro_cuota),
-			'date':self.account_leasing_line_id.fecha,
-			'fecha_contable':self.account_leasing_line_id.fecha,
-			'leasing_line_id':self.account_leasing_line_id.id
+			'journal_id': parametros.journal_asiento_compra_id.id,
+			'partner_id': self.account_leasing_id.partner_id.id,
+			'ref': f'LEASING NRO {str(self.account_leasing_id.nro_contrato)} - CUOTA NRO {str(self.account_leasing_line_id.nro_cuota)}',
+			'date': self.account_leasing_line_id.fecha,
+			'fecha_contable': self.account_leasing_line_id.fecha,
+			'leasing_line_id': self.account_leasing_line_id.id,
 		}
 		m = self.env['account.move'].create(vals_asiento)
 		self.account_leasing_line_id.write({'move':True})
 		sumatoria=0
 		currency_suma=0
-		for c,i in enumerate(devengo):
+		for c, i in enumerate(devengo):
 			amount_currency = 0
 			if self.account_leasing_id.currency_id.name != 'PEN':
 				amount_currency = i[0]
 				i[0] = self.tc * i[0]
 				i[0] = float(Decimal(str(i[0])).quantize(Decimal('0.01'), rounding=ROUND_HALF_UP))
-				sumatoria += i[0]
-				if parametros.journal_asiento_compra_id.currency_id and parametros.journal_asiento_compra_id.currency_id.name == 'USD':
-					currency_suma += amount_currency
-			else:
-				sumatoria += i[0]
-				if parametros.journal_asiento_compra_id.currency_id and parametros.journal_asiento_compra_id.currency_id.name == 'USD':
-					currency_suma += amount_currency
+			sumatoria += i[0]
+			if parametros.journal_asiento_compra_id.currency_id and parametros.journal_asiento_compra_id.currency_id.name == 'USD':
+				currency_suma += amount_currency
 			vals_asiento_line = {
-				'name':'PRESTAMO '+str(self.account_leasing_id.partner_id.name)+' NRO '+str(self.account_leasing_id.nro_contrato)+' CUOTA NRO '+str(self.account_leasing_line_id.nro_cuota),
-				'account_id':i[1],
-				'partner_id':self.account_leasing_id.partner_id.id,
-				'type_document_it':parametros.catalog_comprobante_cuotas_id.id,
-				'nro_comprobante':self.factura_cuota,
-				'currency_id':self.account_leasing_id.currency_id.id,
-				'debit':0 if c == 1 else i[0],
-				'credit':sumatoria if c == 1 else 0,
-				'amount_currency':0-currency_suma if c == 1 else amount_currency,
-				'tc':self.tc,
-				'move_id':m.id
+				'name': f'PRESTAMO {str(self.account_leasing_id.partner_id.name)} NRO {str(self.account_leasing_id.nro_contrato)} CUOTA NRO {str(self.account_leasing_line_id.nro_cuota)}',
+				'account_id': i[1],
+				'partner_id': self.account_leasing_id.partner_id.id,
+				'type_document_it': parametros.catalog_comprobante_cuotas_id.id,
+				'nro_comprobante': self.factura_cuota,
+				'currency_id': self.account_leasing_id.currency_id.id,
+				'debit': 0 if c == 1 else i[0],
+				'credit': sumatoria if c == 1 else 0,
+				'amount_currency': 0 - currency_suma if c == 1 else amount_currency,
+				'tc': self.tc,
+				'move_id': m.id,
 			}
 			if vals_asiento_line['debit'] > 0 or vals_asiento_line['credit'] > 0:
 				self.env['account.move.line'].create(vals_asiento_line)

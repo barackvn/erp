@@ -392,15 +392,16 @@ INNER JOIN
         ON
             ra.id = rp.report_account_id
         """
-        if not only_empty_partner_line:
-            query_inject_line += """
-        AND rpo.partner_id = rp.partner_id
+        query_inject_line += (
             """
-        elif only_empty_partner_line:
-            query_inject_line += """
         AND rpo.partner_id IS NULL
         AND rp.partner_id IS NULL
             """
+            if only_empty_partner_line
+            else """
+        AND rpo.partner_id = rp.partner_id
+            """
+        )
         query_inject_line += """
 WHERE
     rao.report_id = %s
@@ -512,15 +513,16 @@ INNER JOIN
         ON
             ra.id = rp.report_account_id
         """
-        if not only_empty_partner_line:
-            query_inject_move_line += """
-        AND rpo.partner_id = rp.partner_id
+        query_inject_move_line += (
             """
-        elif only_empty_partner_line:
-            query_inject_move_line += """
         AND rpo.partner_id IS NULL
         AND rp.partner_id IS NULL
             """
+            if only_empty_partner_line
+            else """
+        AND rpo.partner_id = rp.partner_id
+            """
+        )
         query_inject_move_line += """
 WHERE
     rao.report_id = %s

@@ -55,7 +55,7 @@ class SequenceWizard(models.TransientModel):
 
 	@api.multi
 	def generar_secuencia(self):
-		from datetime import datetime, timedelta	
+		from datetime import datetime, timedelta
 		day = 1
 		month = 1
 		year = int(self.fiscal_id.name)
@@ -63,7 +63,7 @@ class SequenceWizard(models.TransientModel):
 		self.journal_id.sequence_id.prefix = '%(month)s-'
 		self.journal_id.sequence_id.padding = 6
 		self.journal_id.sequence_id.code = 'account.journal'
-		for fech in range(12):
+		for _ in range(12):
 			dia_1 = datetime(day=day,month=month,year=year)
 			month+= 1
 			if month == 13:
@@ -82,11 +82,13 @@ class SequenceWizard(models.TransientModel):
 				self.env['ir.sequence.date_range'].create(data)
 
 		return {
-			'name':'Exitoso',
-			'type':'ir.actions.act_window',
-			'view_type':'form',
-			'view_mode':'form',
-			'res_model':'sh.message.wizard',
-			'target':'new',
-			'context':{'message':"Se ha generado las secuencias para el ejercicio fiscal '"+self.fiscal_id.name+"'" + ", y el diario '"+self.journal_id.name+"'"}
+			'name': 'Exitoso',
+			'type': 'ir.actions.act_window',
+			'view_type': 'form',
+			'view_mode': 'form',
+			'res_model': 'sh.message.wizard',
+			'target': 'new',
+			'context': {
+				'message': f"Se ha generado las secuencias para el ejercicio fiscal '{self.fiscal_id.name}', y el diario '{self.journal_id.name}'"
+			},
 		}

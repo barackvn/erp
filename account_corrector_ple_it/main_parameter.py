@@ -168,8 +168,8 @@ class corrector_ple_compra(models.Model):
 				""")
 			t = self.env.cr.fetchall()
 			for j in t:
-					tipo_tmp = ""
-					self.env.cr.execute("""
+				tipo_tmp = ""
+				self.env.cr.execute("""
 					select aa.tipo_adquisicion_diario from
 					account_move am
 								inner join account_period ap on ap.date_start <= am.date and ap.date_stop >= am.date and coalesce(ap.special,false) = coalesce(am.fecha_special,false)
@@ -180,10 +180,10 @@ class corrector_ple_compra(models.Model):
 					and am.journal_id = """ +str(i.libro.id)+ """
 					and am.id = """ +str(j[0])+ """
 					""")
-					for w in self.env.cr.fetchall():
-						tipo_tmp = w[0] if w[0] else ''
+				for w in self.env.cr.fetchall():
+					tipo_tmp = w[0] or ''
 
-					self.env.cr.execute(""" 
+				self.env.cr.execute(""" 
 						UPDATE account_invoice  SET
 						tipo_adquisicion = '""" +tipo_tmp+ """'
 						where move_id = """ +str(j[0])+ """

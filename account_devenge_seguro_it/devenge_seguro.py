@@ -26,28 +26,32 @@ class crear_asiento_devenge(models.Model):
 			i.asiento = asi.id
 
 			line = {
-				'move_id':asi.id,
-				'partner_id':i.parent_partner_id.id,
-				'type_document_it':self.env['einvoice.catalog.01'].search([('code','=','00')])[0].id,
-				'nro_comprobante':i.parent_contract,
-				'account_id':i.parent_due_account_id.id,
-				'debit':i.amount_due,
-				'credit':0,
-				'analytic_account_id':i.parent_analitic_account_id.id,
-				'name':'DEVENGO ' + i.parent_name,
+				'move_id': asi.id,
+				'partner_id': i.parent_partner_id.id,
+				'type_document_it': self.env['einvoice.catalog.01']
+				.search([('code', '=', '00')])[0]
+				.id,
+				'nro_comprobante': i.parent_contract,
+				'account_id': i.parent_due_account_id.id,
+				'debit': i.amount_due,
+				'credit': 0,
+				'analytic_account_id': i.parent_analitic_account_id.id,
+				'name': f'DEVENGO {i.parent_name}',
 			}
 			self.env['account.move.line'].create(line)
 
 
 			line = {
-				'move_id':asi.id,
-				'partner_id':i.parent_partner_id.id,
-				'type_document_it':self.env['einvoice.catalog.01'].search([('code','=','00')])[0].id,
-				'nro_comprobante':i.parent_contract,
-				'account_id':i.parent_insurance_account_id.id,
-				'debit':0,
-				'credit':i.amount_due,
-				'name':'DEVENGO ' + i.parent_name,
+				'move_id': asi.id,
+				'partner_id': i.parent_partner_id.id,
+				'type_document_it': self.env['einvoice.catalog.01']
+				.search([('code', '=', '00')])[0]
+				.id,
+				'nro_comprobante': i.parent_contract,
+				'account_id': i.parent_insurance_account_id.id,
+				'debit': 0,
+				'credit': i.amount_due,
+				'name': f'DEVENGO {i.parent_name}',
 			}
 			self.env['account.move.line'].create(line)
 
@@ -56,12 +60,12 @@ class crear_asiento_devenge(models.Model):
 
 		return {
 		    'name': 'Asientos de Devengo de Seguro',
-            'view_mode': 'tree,form',
-            'view_id': False,
-            'view_type': 'form',
-            'res_model': 'account.move',
-            'type': 'ir.actions.act_window',
-            'domain': [('id','in', asiento_ids )],
+		'view_mode': 'tree,form',
+		'view_id': False,
+		'view_type': 'form',
+		'res_model': 'account.move',
+		'type': 'ir.actions.act_window',
+		'domain': [('id','in', asiento_ids )],
 		}
 
 
@@ -144,15 +148,14 @@ class ctrl_insurance(models.Model):
 	def unlink(self):
 		if self.state != 'draft':
 			raise UserError(u'No se puede eliminar un Seguro en proceso o finalizado.')
-		t = super(ctrl_insurance,self).unlink()
-		return t		
+		return super(ctrl_insurance,self).unlink()		
 
 	@api.one
 	def get_saldo(self):
 		tmp = 0
 		for i in self.line_ids:
 			fecha = str(i.date_due).split('-')
-			hoy = str(datetime.datetime.today())[:10].split('-')
+			hoy = str(datetime.datetime.now())[:10].split('-')
 			if fecha[0] == hoy[0] and fecha[1] == hoy[1]:
 				tmp = i.insurance_balance
 		self.saldo = tmp

@@ -12,7 +12,7 @@ class AccountInvoice(models.Model):
     def import_lines(self):
         self.ensure_one()
         module = __name__.split('addons.')[1].split('.')[0]
-        view = self.env.ref('%s.ail_import_view_form' % module)
+        view = self.env.ref(f'{module}.ail_import_view_form')
         return {
             'name': _('Import File'),
             'view_type': 'form',

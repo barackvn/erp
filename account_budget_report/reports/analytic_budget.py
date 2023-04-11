@@ -58,9 +58,7 @@ class AnalyticAccountBudgetReport(report_sxw.rml_parse):
 
         for account_id in accounts:
             res = {}
-            b_line_ids = []
-            for line in account_id.crossovered_budget_line:
-                b_line_ids.append(line.id)
+            b_line_ids = [line.id for line in account_id.crossovered_budget_line]
             if not b_line_ids:
                 return []
             d_from = form['date_from']
@@ -70,7 +68,7 @@ class AnalyticAccountBudgetReport(report_sxw.rml_parse):
             budget_ids = self.cr.fetchall()
 
             context = {'wizard_date_from': d_from, 'wizard_date_to': d_to}
-            for i in range(0, len(budget_ids)):
+            for i in range(len(budget_ids)):
                 budget_name = obj_c_budget.browse([budget_ids[i][0]])
                 res = {
                      'b_id': '-1',
@@ -98,7 +96,7 @@ class AnalyticAccountBudgetReport(report_sxw.rml_parse):
                         if line.general_budget_id.id in done_budget:
                             for record in result:
                                 if record['b_id'] == line.general_budget_id.id and \
-                                                record['a_id'] == line.analytic_account_id.id:
+                                                    record['a_id'] == line.analytic_account_id.id:
                                     record['theo'] += theo
                                     record['pln'] += line.planned_amount
                                     record['prac'] += pract
@@ -124,27 +122,20 @@ class AnalyticAccountBudgetReport(report_sxw.rml_parse):
                             tot_perc += line.percentage
                             result.append(res1)
                             done_budget.append(line.general_budget_id.id)
-                    else:
-                        if line.general_budget_id.id in done_budget:
-                            continue
-                        else:
-                            res1 = {
-                                    'b_id': line.general_budget_id.id,
-                                    'a_id': line.analytic_account_id.id,
-                                    'name': line.general_budget_id.name,
-                                    'status': 2,
-                                    'theo': 0.00,
-                                    'pln': 0.00,
-                                    'prac': 0.00,
-                                    'perc': 0.00
-                            }
-                            result.append(res1)
-                            done_budget.append(line.general_budget_id.id)
-                if tot_theo == 0.00:
-                    tot_perc = 0.00
-                else:
-                    tot_perc = float(tot_prac / tot_theo) * 100
-
+                    elif line.general_budget_id.id not in done_budget:
+                        res1 = {
+                                'b_id': line.general_budget_id.id,
+                                'a_id': line.analytic_account_id.id,
+                                'name': line.general_budget_id.name,
+                                'status': 2,
+                                'theo': 0.00,
+                                'pln': 0.00,
+                                'prac': 0.00,
+                                'perc': 0.00
+                        }
+                        result.append(res1)
+                        done_budget.append(line.general_budget_id.id)
+                tot_perc = 0.00 if tot_theo == 0.00 else float(tot_prac / tot_theo) * 100
                 result[-(len(done_budget) + 1)]['theo'] = tot_theo
                 tot['theo'] += tot_theo
                 result[-(len(done_budget) + 1)]['pln'] = tot_pln
@@ -159,15 +150,13 @@ class AnalyticAccountBudgetReport(report_sxw.rml_parse):
         return result
 
     def funct_total(self, form):
-        result = []
         res = {
              'tot_theo': tot['theo'],
              'tot_pln': tot['pln'],
              'tot_prac': tot['prac'],
              'tot_perc': tot['perc']
         }
-        result.append(res)
-        return result
+        return [res]
 
 
 class ReportAnalyticAccountBudget(osv.AbstractModel):

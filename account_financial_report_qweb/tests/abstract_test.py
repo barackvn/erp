@@ -9,21 +9,21 @@ from odoo.tests.common import TransactionCase
 class AbstractTest(TransactionCase):
     """Common technical tests for all reports."""
 
-    def setUp(cls):
-        super(AbstractTest, cls).setUp()
+    def setUp(self):
+        super(AbstractTest, self).setUp()
 
-        cls.model = cls._getReportModel()
+        self.model = self._getReportModel()
 
-        cls.qweb_report_name = cls._getQwebReportName()
-        cls.xlsx_report_name = cls._getXlsxReportName()
-        cls.xlsx_action_name = cls._getXlsxReportActionName()
+        self.qweb_report_name = self._getQwebReportName()
+        self.xlsx_report_name = self._getXlsxReportName()
+        self.xlsx_action_name = self._getXlsxReportActionName()
 
-        cls.report_title = cls._getReportTitle()
+        self.report_title = self._getReportTitle()
 
-        cls.base_filters = cls._getBaseFilters()
-        cls.additional_filters = cls._getAdditionalFiltersToBeTested()
+        self.base_filters = self._getBaseFilters()
+        self.additional_filters = self._getAdditionalFiltersToBeTested()
 
-        cls.report = cls.model.create(cls.base_filters)
+        self.report = self.model.create(self.base_filters)
 
     def test_01_generation_report_qweb(self):
         """Check if report PDF/HTML is correctly generated"""

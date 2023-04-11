@@ -27,10 +27,7 @@ class MakeKardexAccountWizard(models.TransientModel):
 	@api.multi
 	def get_analizador(self):
 		if 'tipo' in self.env.context:
-			if self.env.context['tipo'] == 'valorado':
-				self.analizador = True
-			else:
-				self.analizador = False
+			self.analizador = self.env.context['tipo'] == 'valorado'
 		else:
 			self.analizador = False
 
@@ -54,7 +51,7 @@ class MakeKardexAccountWizard(models.TransientModel):
 		res = super(MakeKardexAccountWizard, self).default_get(fields)
 		import datetime
 		fecha_hoy = str(datetime.datetime.now())[:10]
-		fecha_inicial = fecha_hoy[:4] + '-01-01'
+		fecha_inicial = f'{fecha_hoy[:4]}-01-01'
 		res.update({'fecha_ini_mod':fecha_inicial})
 		res.update({'fecha_fin_mod':fecha_hoy})
 		res.update({'fini':fecha_inicial})
@@ -164,7 +161,7 @@ class MakeKardexAccountWizard(models.TransientModel):
 		reload(sys)
 		sys.setdefaultencoding('iso-8859-1')
 
-		workbook = Workbook(direccion +'account_balance.xlsx')
+		workbook = Workbook(f'{direccion}account_balance.xlsx')
 		boldbord,especial1,especial3,numberdos,dateformat,hourformat = set_format(workbook)
 		yellow = workbook.add_format()
 		yellow.set_align('center')
@@ -224,17 +221,17 @@ class MakeKardexAccountWizard(models.TransientModel):
 		worksheet.write(x,8,"Saldo Valorado",boldbord)
 		worksheet.write(x,9,"Costo Unitario",boldbord)
 		x=1
-		for line in result:	
-			worksheet.write(x,0,line['almacen'] if line['almacen'] else '',yellow)
-			worksheet.write(x,1,line['code'] if line['code'] else '',yellow)
-			worksheet.write(x,2,line['name'] if line['name'] else '',especial1)
-			worksheet.write(x,3,line['ingreso'] if line['ingreso'] else 0,numberdos)
-			worksheet.write(x,4,line['salida'] if line['salida'] else 0,numberdos)
-			worksheet.write(x,5,line['debe'] if line['debe'] else 0,numberdos)
-			worksheet.write(x,6,line['haber'] if line['haber'] else 0,numberdos)
-			worksheet.write(x,7,line['saldo_fisico'] if line['saldo_fisico'] else 0,numberyellow)
-			worksheet.write(x,8,line['saldo_valorado'] if line['saldo_valorado'] else 0,numberdos)
-			worksheet.write(x,9,line['costo_unitario'] if line['costo_unitario'] else 0,numberyellow)
+		for line in result:
+			worksheet.write(x, 0, line['almacen'] or '', yellow)
+			worksheet.write(x, 1, line['code'] or '', yellow)
+			worksheet.write(x, 2, line['name'] or '', especial1)
+			worksheet.write(x, 3, line['ingreso'] or 0, numberdos)
+			worksheet.write(x, 4, line['salida'] or 0, numberdos)
+			worksheet.write(x, 5, line['debe'] or 0, numberdos)
+			worksheet.write(x, 6, line['haber'] or 0, numberdos)
+			worksheet.write(x, 7, line['saldo_fisico'] or 0, numberyellow)
+			worksheet.write(x, 8, line['saldo_valorado'] or 0, numberdos)
+			worksheet.write(x, 9, line['costo_unitario'] or 0, numberyellow)
 			x += 1
 		tam_col = [30,15,40,10,10,10,10,10,10,10]
 		worksheet.set_column('A:A', tam_col[0])
@@ -247,7 +244,7 @@ class MakeKardexAccountWizard(models.TransientModel):
 		worksheet.set_column('H:H', tam_col[7])
 		worksheet.set_column('I:I', tam_col[8])
 		worksheet.set_column('J:J', tam_col[9])
-		f = open(direccion + 'account_balance.xlsx', 'rb')
+		f = open(f'{direccion}account_balance.xlsx', 'rb')
 		vals = {
 			'output_name': 'Reporte de Saldos.xlsx',
 			'output_file': base64.encodestring(''.join(f.readlines())),
@@ -324,7 +321,7 @@ class MakeKardexAccountWizard(models.TransientModel):
 					where (T.ingreso - T.salida) >= 0
 				) TO '"""+ direccion+ """account_balance.csv' DELIMITER '|' CSV""")
 
-		f = open(direccion + 'account_balance.csv', 'rb')
+		f = open(f'{direccion}account_balance.csv', 'rb')
 		vals = {
 			'output_name': 'Reporte de Saldos.csv',
 			'output_file': base64.encodestring(''.join(f.readlines())),
@@ -405,7 +402,7 @@ class MakeKardexAccountWizard(models.TransientModel):
 					where (T.ingreso - T.salida) >= 0
 				) TO '"""+ direccion+ """account_balance.csv' DELIMITER '|' CSV""")
 
-		f = open(direccion + 'account_balance.csv', 'rb')
+		f = open(f'{direccion}account_balance.csv', 'rb')
 		vals = {
 			'output_name': 'Reporte de Saldos.csv',
 			'output_file': base64.encodestring(''.join(f.readlines())),

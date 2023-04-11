@@ -79,10 +79,12 @@ class AccountStatementLineCreate(models.TransientModel):
             domain.append(('date', '<=', self.move_date))
         if self.invoice:
             domain.append(('invoice_id', '!=', False))
-        paylines = self.env['account.payment'].search([
-            ('state', 'in', ('draft', 'posted', 'sent')),
-            ('move_line_ids', '!=', False)])
-        if paylines:
+        if paylines := self.env['account.payment'].search(
+            [
+                ('state', 'in', ('draft', 'posted', 'sent')),
+                ('move_line_ids', '!=', False),
+            ]
+        ):
             move_in_payment_ids = paylines.mapped('move_line_ids.id')
             domain += [('id', 'not in', move_in_payment_ids)]
         return domain
@@ -92,7 +94,7 @@ class AccountStatementLineCreate(models.TransientModel):
         domain = self._prepare_move_line_domain()
         lines = self.env['account.move.line'].search(domain)
         self.move_line_ids = lines
-        action = {
+        return {
             'name': _('Select Move Lines to Create Statement'),
             'type': 'ir.actions.act_window',
             'res_model': 'account.statement.line.create',
@@ -101,15 +103,13 @@ class AccountStatementLineCreate(models.TransientModel):
             'res_id': self.id,
             'context': self._context,
         }
-        return action
 
     @api.onchange(
         'date_type', 'move_date', 'due_date', 'journal_ids', 'invoice',
         'target_move', 'allow_blocked', 'partner_id')
     def move_line_filters_change(self):
         domain = self._prepare_move_line_domain()
-        res = {'domain': {'move_line_ids': domain}}
-        return res
+        return {'domain': {'move_line_ids': domain}}
 
     @api.multi
     def create_statement_lines(self):

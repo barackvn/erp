@@ -56,9 +56,9 @@ class MassReconcileSimple(models.AbstractModel):
     def _action_rec(self):
         """Match only 2 move lines, do not allow partial reconcile"""
         select = self._select()
-        select += ", account_move_line.%s " % self._key_field
+        select += f", account_move_line.{self._key_field} "
         where, params = self._where()
-        where += " AND account_move_line.%s IS NOT NULL " % self._key_field
+        where += f" AND account_move_line.{self._key_field} IS NOT NULL "
 
         where2, params2 = self._get_filter()
         query = ' '.join((

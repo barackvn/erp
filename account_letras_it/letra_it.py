@@ -52,16 +52,14 @@ class account_letras_payment_factura(models.Model):
 		if 'invoice_id' in vals:
 			invoice = self.env['account.invoice'].browse(vals['invoice_id'])
 			vals['currency_id'] = invoice.currency_id.id
-		t = super(account_letras_payment_factura,self).create(vals)
-		return t
+		return super(account_letras_payment_factura,self).create(vals)
 
 	@api.one
 	def write(self,vals):
 		if 'invoice_id' in vals:
 			invoice = self.env['account.invoice'].browse(vals['invoice_id'])
 			vals['currency_id'] = invoice.currency_id.id
-		t = super(account_letras_payment_factura,self).write(vals)
-		return t
+		return super(account_letras_payment_factura,self).write(vals)
 
 
 
@@ -221,7 +219,6 @@ class account_letras_payment_letra(models.Model):
 				if i.divisa.id and i.divisa.name == 'USD':
 					flag = True
 
-		if self.letra_payment_id.id:
 			if self.letra_payment_id.tipo == '1':			
 				self.cuenta =  param.cuenta_letras_lcliente_me.id if flag else param.cuenta_letras_lcliente_mn.id
 			else:
@@ -267,7 +264,6 @@ class account_letras_payment_letra_manual(models.Model):
 				if i.divisa.id and i.divisa.name == 'USD':
 					flag = True
 
-		if self.letra_payment_id.id:
 			if self.letra_payment_id.tipo == '1':			
 				self.cuenta =  param.cuenta_letras_lcliente_me.id if flag else param.cuenta_letras_lcliente_mn.id
 			else:
@@ -312,9 +308,7 @@ class account_letras_payment(models.Model):
 
 	@api.one
 	def get_total_monto(self):
-		tmp = 0
-		for i in self.factura_ids:
-			tmp+= i.monto
+		tmp = sum(i.monto for i in self.factura_ids)
 		self.total_monto = tmp
 
 	@api.multi
@@ -325,7 +319,7 @@ class account_letras_payment(models.Model):
 		period_2 = '12'+'/'+anio
 
 		fiscalyear_id = self.env['account.fiscalyear'].search([('name','=',anio)])[0].id
-		
+
 		period_id_1 =  self.env['account.period'].search([('code','=',period_1)])[0].id
 		period_id_2 =  self.env['account.period'].search([('code','=',period_2)])[0].id
 		cadfact = ''
@@ -343,8 +337,7 @@ class account_letras_payment(models.Model):
 			'comprobantes': cadfact
 			}
 		reporte = self.env['saldo.comprobante.periodo.wizard'].create(vals)
-		c = reporte.do_rebuild()
-		return c
+		return reporte.do_rebuild()
 
 		
 
@@ -356,7 +349,7 @@ class account_letras_payment(models.Model):
 		period_2 = '12'+'/'+anio
 
 		fiscalyear_id = self.env['account.fiscalyear'].search([('name','=',anio)])[0].id
-		
+
 		period_id_1 =  self.env['account.period'].search([('code','=',period_1)])[0].id
 		period_id_2 =  self.env['account.period'].search([('code','=',period_2)])[0].id
 		cadfact = ''
@@ -374,8 +367,7 @@ class account_letras_payment(models.Model):
 			'comprobantes': cadfact
 			}
 		reporte = self.env['saldo.comprobante.periodo.wizard'].create(vals)
-		c = reporte.do_rebuild()
-		return c
+		return reporte.do_rebuild()
 
 	@api.multi
 	def get_rest_draught1(self):
@@ -415,15 +407,12 @@ class account_letras_payment(models.Model):
 			id_seq = id_seq[0]
 		else:
 			id_seq = self.env['ir.sequence'].create({'name':'Canje de Letra','implementation':'standard','active':True,'prefix':'CLT-','padding':4,'number_increment':1,'number_next_actual' :1})
-		
+
 		vals['name'] = id_seq.next_by_id()
 
 		t = super(account_letras_payment,self).create(vals)
 
-		total = 0
-		for opt in t.factura_ids:
-			total += opt.monto
-
+		total = sum(opt.monto for opt in t.factura_ids)
 		tt = t.termino_pago_id.with_context(currency_id=self.env['res.currency'].search([('name','=','USD')])[0].id).compute(total, t.fecha_canje)[0]
 		tt = sorted(tt)
 
@@ -448,11 +437,8 @@ class account_letras_payment(models.Model):
 		if 'termino_pago_id' in vals:
 			for mm in self.letras_ids:
 				mm.unlink()
-			
-			total = 0
-			for opt in self.factura_ids:
-				total += opt.monto_divisa
 
+			total = sum(opt.monto_divisa for opt in self.factura_ids)
 			tt = self.termino_pago_id.with_context(currency_id=self.env['res.currency'].search([('name','=','USD')])[0].id).compute(total, self.fecha_canje)[0]
 			tt = sorted(tt)
 			cont = 0
@@ -478,17 +464,14 @@ class account_letras_payment(models.Model):
 
 		for mm in self.letras_ids:
 			mm.unlink()
-		
-		total = 0
-		for opt in self.factura_ids:
-			total += opt.monto_divisa
 
+		total = sum(opt.monto_divisa for opt in self.factura_ids)
 		tt = self.termino_pago_id.with_context(currency_id=self.env['res.currency'].search([('name','=','USD')])[0].id).compute(total, self.fecha_canje)[0]
 		tt = sorted(tt)
 		cont = 0
 		for i in self.termino_pago_id.line_ids.sorted(key=lambda r: r.days):
 			if len(tt)>cont:
-					
+
 				data= {
 					'payment_line_id':i.id,
 					'fecha_vencimiento': tt[cont][0],
@@ -501,162 +484,166 @@ class account_letras_payment(models.Model):
 
 	@api.one
 	def crear_asiento(self):
-		if not self.asiento.id:
-			if self.factura_ids:
-				currency = self.factura_ids[0].currency_id.id
-				for i in self.factura_ids:
-					if i.currency_id.id != currency:
-						raise UserError('No se puede tener facturas con diferentes tipos de moneda')
-			y_ver = 0
-			x_ver = 0
-			for oo in self.factura_ids:
-				y_ver += oo.monto_divisa
+		if self.asiento.id:
+			return
+		if self.factura_ids:
+			currency = self.factura_ids[0].currency_id.id
+			for i in self.factura_ids:
+				if i.currency_id.id != currency:
+					raise UserError('No se puede tener facturas con diferentes tipos de moneda')
+		x_ver = 0
+		y_ver = sum(oo.monto_divisa for oo in self.factura_ids)
+		if self.usar_termino:
+			for oo in self.letras_ids:
+				x_ver += oo.monto_divisa
+		else:
+			for oo in self.letras_manual_ids:
+				x_ver += oo.monto_divisa
 
-			if self.usar_termino:
-				for oo in self.letras_ids:
-					x_ver += oo.monto_divisa
-			else:
-				for oo in self.letras_manual_ids:
-					x_ver += oo.monto_divisa
+		if abs(float(x_ver) - float(y_ver)) >= 0.01:
+			raise UserError( 'Los totales de Factura y Letras no son iguales, por favor Actualizar antes de generar el asiento.' )
 
-			if abs(float(x_ver) - float(y_ver)) >= 0.01:
-				raise UserError( 'Los totales de Factura y Letras no son iguales, por favor Actualizar antes de generar el asiento.' )
+		data = {
+			'journal_id':self.journal_id.id,
+			'date':self.fecha_canje,
+			'ref':self.name,
+		}
 
-			data = {
-				'journal_id':self.journal_id.id,
-				'date':self.fecha_canje,
-				'ref':self.name,
-			}
-
-			t = self.env['account.move'].create(data)
+		t = self.env['account.move'].create(data)
 
 
-			param = self.env['main.parameter'].search([])[0]			
-			if self.tipo == '2':
+		param = self.env['main.parameter'].search([])[0]
+		if self.tipo == '2':
 
-				for i in self.factura_ids:
-					di = {
-						'move_id':t.id,
-						'account_id': i.invoice_id.account_id.id if i.invoice_id.id else i.move_line_id.account_id.id,# param.cuenta_letras_fproveedor_me.id if i.divisa.id else param.cuenta_letras_fproveedor_mn.id,
-						'partner_id':self.partner_id.id,
-						'type_document_it':i.tipo_doc.id,
-						'nro_comprobante':i.nro_comprobante,
-						'name':'CANJE DE LETRAS POR FACTURA',
-						'amount_currency':i.monto_divisa if i.divisa.id else 0,
-						'currency_id':i.divisa.id,
-						'debit':i.monto if i.monto >0 else 0,
-						'credit':-i.monto if i.monto <0 else 0,
-						'date_maturity':False,
-						'tc':i.tipo_cambio if i.divisa.id else False,
-					}
-					ott = self.env['account.move.line'].create(di)
-					ids_conciliacion = []
-					ids_conciliacion.append(ott.id)
-
-					if i.invoice_id.id:
-						for ml in i.invoice_id.move_id.line_ids:
-							if ml.account_id.id == ott.account_id.id  and ml.type_document_it.id == ott.type_document_it.id and ml.nro_comprobante == ott.nro_comprobante:
-								ids_conciliacion.append(ml.id)
-					if len(ids_conciliacion) >1:
-						self.env['account.move.line'].browse(ids_conciliacion).reconcile()
-
-
-				obj_res = self.letras_manual_ids
-				if self.usar_termino:
-					obj_res = self.letras_ids
-					
-				for i in obj_res:
-					di = {
-						'move_id':t.id,
-						'account_id':i.cuenta.id,
-						'partner_id':self.partner_id.id,
-						'type_document_it': self.env['einvoice.catalog.01'].search([('code','=','00')])[0].id,
-						'nro_comprobante':i.nro_letra,
-						'name':'CANJE DE LETRAS POR FACTURA',
-						'amount_currency':-i.monto_divisa if i.cuenta.currency_id.id else 0,
-						'currency_id':i.cuenta.currency_id.id,
-						'debit':-i.monto if i.monto <0 else 0,
-						'credit':i.monto if i.monto >0 else 0,
-						'date_maturity':i.fecha_vencimiento,
-						'tc':i.tc if i.cuenta.currency_id.id else False,
-					}
-					self.env['account.move.line'].create(di)
-
-			else:
-
-				for i in self.factura_ids:
-					di = {
-						'move_id':t.id,
-						'account_id':i.invoice_id.account_id.id if i.invoice_id.id else i.move_line_id.account_id.id,#param.cuenta_letras_fcliente_me.id if i.divisa.id else param.cuenta_letras_fcliente_mn.id,
-						'partner_id':self.partner_id.id,
-						'type_document_it':i.tipo_doc.id,
-						'nro_comprobante':i.nro_comprobante,
-						'name':'CANJE DE LETRAS POR FACTURA',
-						'amount_currency':-i.monto_divisa if i.divisa.id else 0,
-						'currency_id':i.divisa.id,
-						'debit':-i.monto if i.monto <0 else 0,
-						'credit':i.monto if i.monto >0 else 0,
-						'date_maturity':False,
-						'tc':i.tipo_cambio if i.divisa.id else False,
-					}
-					ott = self.env['account.move.line'].create(di)
-					ids_conciliacion = []
-					ids_conciliacion.append(ott.id)
-
-					if i.invoice_id.id:
-						for ml in i.invoice_id.move_id.line_ids:
-							if ml.account_id.id == ott.account_id.id  and ml.type_document_it.id == ott.type_document_it.id and ml.nro_comprobante == ott.nro_comprobante:
-								ids_conciliacion.append(ml.id)
-					if len(ids_conciliacion) >1:
-						self.env['account.move.line'].browse(ids_conciliacion).reconcile()
-
-				obj_res = self.letras_manual_ids
-				if self.usar_termino:
-					obj_res = self.letras_ids
-					
-				for i in obj_res:
-					di = {
-						'move_id':t.id,
-						'account_id':i.cuenta.id,
-						'partner_id':self.partner_id.id,
-						'type_document_it': self.env['einvoice.catalog.01'].search([('code','=','00')])[0].id,
-						'nro_comprobante':i.nro_letra,
-						'name':'CANJE DE LETRAS POR FACTURA',
-						'amount_currency':i.monto_divisa if i.cuenta.currency_id.id else 0,
-						'currency_id':i.cuenta.currency_id.id,
-						'debit': i.monto if i.monto >0 else 0,
-						'credit':-i.monto if i.monto <0 else 0,
-						'date_maturity':i.fecha_vencimiento,
-						'tc':i.tc if i.cuenta.currency_id.id else False,
-					}
-					self.env['account.move.line'].create(di)
-
-			#redondeo
-			diferencia = 0
-			t.refresh()
-			for i in t.line_ids:
-				diferencia += round(i.debit,2) - round(i.credit,2)
-
-			if abs(round(diferencia,2)) >= 0.01:
-				data = {
-					'move_id':t.id,
-					'account_id': param.cuenta_ganancia_redondeo.id if diferencia>0 else param.cuenta_perdida_redondeo.id,
-					'partner_id':self.partner_id.id,
-					'name':'Redondeo',
-					'debit': abs(round(diferencia,2)) if diferencia<0 else 0,
-					'credit': round(diferencia,2) if diferencia>0 else 0,
+			for i in self.factura_ids:
+				di = {
+					'move_id': t.id,
+					'account_id': i.invoice_id.account_id.id
+					if i.invoice_id.id
+					else i.move_line_id.account_id.id,
+					'partner_id': self.partner_id.id,
+					'type_document_it': i.tipo_doc.id,
+					'nro_comprobante': i.nro_comprobante,
+					'name': 'CANJE DE LETRAS POR FACTURA',
+					'amount_currency': i.monto_divisa if i.divisa.id else 0,
+					'currency_id': i.divisa.id,
+					'debit': max(i.monto, 0),
+					'credit': -i.monto if i.monto < 0 else 0,
+					'date_maturity': False,
+					'tc': i.tipo_cambio if i.divisa.id else False,
 				}
-				self.env['account.move.line'].create(data)
-			t.post()
-			self.asiento = t.id
-			self.state = 'done'
+				ott = self.env['account.move.line'].create(di)
+				ids_conciliacion = [ott.id]
+				if i.invoice_id.id:
+					ids_conciliacion.extend(
+						ml.id
+						for ml in i.invoice_id.move_id.line_ids
+						if ml.account_id.id == ott.account_id.id
+						and ml.type_document_it.id == ott.type_document_it.id
+						and ml.nro_comprobante == ott.nro_comprobante
+					)
+				if len(ids_conciliacion) >1:
+					self.env['account.move.line'].browse(ids_conciliacion).reconcile()
+
+
+			obj_res = self.letras_manual_ids
+			if self.usar_termino:
+				obj_res = self.letras_ids
+
+			for i in obj_res:
+				di = {
+					'move_id': t.id,
+					'account_id': i.cuenta.id,
+					'partner_id': self.partner_id.id,
+					'type_document_it': self.env['einvoice.catalog.01']
+					.search([('code', '=', '00')])[0]
+					.id,
+					'nro_comprobante': i.nro_letra,
+					'name': 'CANJE DE LETRAS POR FACTURA',
+					'amount_currency': -i.monto_divisa if i.cuenta.currency_id.id else 0,
+					'currency_id': i.cuenta.currency_id.id,
+					'debit': -i.monto if i.monto < 0 else 0,
+					'credit': max(i.monto, 0),
+					'date_maturity': i.fecha_vencimiento,
+					'tc': i.tc if i.cuenta.currency_id.id else False,
+				}
+				self.env['account.move.line'].create(di)
+
+		else:
+
+			for i in self.factura_ids:
+				di = {
+					'move_id': t.id,
+					'account_id': i.invoice_id.account_id.id
+					if i.invoice_id.id
+					else i.move_line_id.account_id.id,
+					'partner_id': self.partner_id.id,
+					'type_document_it': i.tipo_doc.id,
+					'nro_comprobante': i.nro_comprobante,
+					'name': 'CANJE DE LETRAS POR FACTURA',
+					'amount_currency': -i.monto_divisa if i.divisa.id else 0,
+					'currency_id': i.divisa.id,
+					'debit': -i.monto if i.monto < 0 else 0,
+					'credit': max(i.monto, 0),
+					'date_maturity': False,
+					'tc': i.tipo_cambio if i.divisa.id else False,
+				}
+				ott = self.env['account.move.line'].create(di)
+				ids_conciliacion = [ott.id]
+				if i.invoice_id.id:
+					ids_conciliacion.extend(
+						ml.id
+						for ml in i.invoice_id.move_id.line_ids
+						if ml.account_id.id == ott.account_id.id
+						and ml.type_document_it.id == ott.type_document_it.id
+						and ml.nro_comprobante == ott.nro_comprobante
+					)
+				if len(ids_conciliacion) >1:
+					self.env['account.move.line'].browse(ids_conciliacion).reconcile()
+
+			obj_res = self.letras_manual_ids
+			if self.usar_termino:
+				obj_res = self.letras_ids
+
+			for i in obj_res:
+				di = {
+					'move_id': t.id,
+					'account_id': i.cuenta.id,
+					'partner_id': self.partner_id.id,
+					'type_document_it': self.env['einvoice.catalog.01']
+					.search([('code', '=', '00')])[0]
+					.id,
+					'nro_comprobante': i.nro_letra,
+					'name': 'CANJE DE LETRAS POR FACTURA',
+					'amount_currency': i.monto_divisa if i.cuenta.currency_id.id else 0,
+					'currency_id': i.cuenta.currency_id.id,
+					'debit': max(i.monto, 0),
+					'credit': -i.monto if i.monto < 0 else 0,
+					'date_maturity': i.fecha_vencimiento,
+					'tc': i.tc if i.cuenta.currency_id.id else False,
+				}
+				self.env['account.move.line'].create(di)
+
+		t.refresh()
+		diferencia = sum(round(i.debit,2) - round(i.credit,2) for i in t.line_ids)
+		if abs(round(diferencia,2)) >= 0.01:
+			data = {
+				'move_id':t.id,
+				'account_id': param.cuenta_ganancia_redondeo.id if diferencia>0 else param.cuenta_perdida_redondeo.id,
+				'partner_id':self.partner_id.id,
+				'name':'Redondeo',
+				'debit': abs(round(diferencia,2)) if diferencia<0 else 0,
+				'credit': round(diferencia,2) if diferencia>0 else 0,
+			}
+			self.env['account.move.line'].create(data)
+		t.post()
+		self.asiento = t.id
+		self.state = 'done'
 
 	@api.one
 	def cancelar(self):
 		if self.asiento.id:
-			if self.asiento.state =='draft':
-				pass
-			else:
+			if self.asiento.state != 'draft':
 				for mm in self.asiento.line_ids:
 					mm.remove_move_reconcile()
 				self.asiento.button_cancel()

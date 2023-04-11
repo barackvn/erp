@@ -92,7 +92,7 @@ class InvoiceLineImport(models.TransientModel):
         header = False
         while not header:
             ln = input.next()
-            if not ln or ln and ln[0] in [self.csv_separator, '#']:
+            if not ln or ln[0] in [self.csv_separator, '#']:
                 continue
             else:
                 header = ln.lower()
@@ -108,7 +108,7 @@ class InvoiceLineImport(models.TransientModel):
         fields requiring pre-processing before being added to
         the invoice line values dict.
         """
-        res = {
+        return {
             'descripcion': {'method': self._handle_descripcion},
             'producto': {'method': self._handle_product},
             'unit of measure': {'method': self._handle_uos},
@@ -118,7 +118,6 @@ class InvoiceLineImport(models.TransientModel):
             'taxes': {'method': self._handle_taxes},
             'analytic account': {'method': self._handle_analytic_account},
         }
-        return res
 
     def _get_orm_fields(self):
         ail_mod = self.env['account.invoice.line']
@@ -158,11 +157,11 @@ class InvoiceLineImport(models.TransientModel):
         for i, hf in enumerate(header_fields):
 
             if hf in self._field_methods \
-                    and self._field_methods[hf].get('method'):
+                        and self._field_methods[hf].get('method'):
                 continue
 
             if hf not in self._orm_fields \
-                    and hf not in [self._orm_fields[f]['string'].lower()
+                        and hf not in [self._orm_fields[f]['string'].lower()
                                    for f in self._orm_fields]:
                 _logger.error(
                     _("%s, undefined field '%s' found "
@@ -183,11 +182,11 @@ class InvoiceLineImport(models.TransientModel):
             field_type = field_def['type']
 
             try:
-                ft = field_type == 'text' and 'char' or field_type
+                ft = 'char' if field_type == 'text' else field_type
                 self._field_methods[hf] = {
-                    'method': getattr(self, '_handle_orm_%s' % ft),
+                    'method': getattr(self, f'_handle_orm_{ft}'),
                     'orm_field': orm_field,
-                    }
+                }
             except AttributeError:
                 _logger.error(
                     _("%s, field '%s', "
@@ -370,9 +369,7 @@ class InvoiceLineImport(models.TransientModel):
     def _handle_uos(self, field, line, invoice, ail_vals):
         if not ail_vals.get('uos_id'):
             name = line[field]
-            uos = self.env['product.uom'].search([
-                ('name', '=ilike', name)])
-            if uos:
+            if uos := self.env['product.uom'].search([('name', '=ilike', name)]):
                 ail_vals['uos_id'] = uos[0].id
             else:
                 msg = _("Unit of Measure with name '%s' not found !") % name
@@ -388,49 +385,48 @@ class InvoiceLineImport(models.TransientModel):
                 self._log_line_error(line, msg)
 
     def _handle_taxes(self, field, line, invoice, ail_vals):
-        if not ail_vals.get('invoice_line_tax_ids'):
-            input = line[field].split(',')
-            tax_ids = []
-            for t in input:
-                tax_in = t.strip()
-                tax = self.env['account.tax'].search([
-                    ('description', '=', tax_in)])
-                if not tax:
-                    tax = self.env['account.tax'].search([
-                        ('name', '=ilike', tax_in)])
-                if tax:
-                    tax_ids.append(tax[0].id)
-                else:
-                    msg = _("Tax with Code or Name '%s' not found !") % t
-                    self._log_line_error(line, msg)
-            if tax_ids:
-                ail_vals['invoice_line_tax_ids'] = [(6, 0, tax_ids)]
+        if ail_vals.get('invoice_line_tax_ids'):
+            return
+        input = line[field].split(',')
+        tax_ids = []
+        for t in input:
+            tax_in = t.strip()
+            if tax := self.env['account.tax'].search(
+                [('description', '=', tax_in)]
+            ) or self.env['account.tax'].search([('name', '=ilike', tax_in)]):
+                tax_ids.append(tax[0].id)
+            else:
+                msg = _("Tax with Code or Name '%s' not found !") % t
+                self._log_line_error(line, msg)
+        if tax_ids:
+            ail_vals['invoice_line_tax_ids'] = [(6, 0, tax_ids)]
 
     def _handle_analytic_account(self, field, line, invoice, ail_vals):
-        if not ail_vals.get('account_analytic_id'):
-            ana_mod = self.env['account.analytic.account']
-            input = line[field]
-            # domain = [('type', '!=', 'view'),
-            #           ('company_id', '=', invoice.company_id.id),
-            #           ('state', 'not in', ['close', 'cancelled'])]
-            domain = [('type', '!=', 'view'),
-                       ('company_id', '=', invoice.company_id.id)]
+        if ail_vals.get('account_analytic_id'):
+            return
+        input = line[field]
+        # domain = [('type', '!=', 'view'),
+        #           ('company_id', '=', invoice.company_id.id),
+        #           ('state', 'not in', ['close', 'cancelled'])]
+        domain = [('type', '!=', 'view'),
+                   ('company_id', '=', invoice.company_id.id)]
+        ana_mod = self.env['account.analytic.account']
+        analytic_accounts = ana_mod.search(
+            domain + [('code', '=', input)])
+        if len(analytic_accounts) == 1:
+            ail_vals['account_analytic_id'] = analytic_accounts.id
+        else:
             analytic_accounts = ana_mod.search(
-                domain + [('code', '=', input)])
+                domain + [('name', '=', input)])
             if len(analytic_accounts) == 1:
                 ail_vals['account_analytic_id'] = analytic_accounts.id
-            else:
-                analytic_accounts = ana_mod.search(
-                    domain + [('name', '=', input)])
-                if len(analytic_accounts) == 1:
-                    ail_vals['account_analytic_id'] = analytic_accounts.id
-            if not analytic_accounts:
-                msg = _("Invalid Analytic Account '%s' !") % input
-                self._log_line_error(line, msg)
-            elif len(analytic_accounts) > 1:
-                msg = _("Multiple Analytic Accounts found "
-                        "that match with '%s' !") % input
-                self._log_line_error(line, msg)
+        if not analytic_accounts:
+            msg = _("Invalid Analytic Account '%s' !") % input
+            self._log_line_error(line, msg)
+        elif len(analytic_accounts) > 1:
+            msg = _("Multiple Analytic Accounts found "
+                    "that match with '%s' !") % input
+            self._log_line_error(line, msg)
 
     def _process_line_vals(self, line, invoice, ail_vals):
         if 'name' not in ail_vals:
@@ -473,7 +469,7 @@ class InvoiceLineImport(models.TransientModel):
             ail_vals = {}
 
             # step 1: handle codepage
-            for i, hf in enumerate(self._header_fields):
+            for hf in self._header_fields:
                 try:
                     line[hf] = line[hf].decode(self.codepage).strip()
                 except:
@@ -511,8 +507,7 @@ class InvoiceLineImport(models.TransientModel):
         if self._err_log:
             self.note = self._err_log
             module = __name__.split('addons.')[1].split('.')[0]
-            result_view = self.env.ref(
-                '%s.ail_import_view_form_result' % module)
+            result_view = self.env.ref(f'{module}.ail_import_view_form_result')
             return {
                 'name': _("Import File result"),
                 'res_id': self.id,

@@ -19,47 +19,64 @@ class TrialBalanceXslx(abstract_report_xlsx.AbstractReportXslx):
         return _('Trial Balance')
 
     def _get_report_columns(self, report):
-        if not report.show_partner_details:
-            return {
+        return (
+            {
+                0: {'header': _('Partner'), 'field': 'name', 'width': 70},
+                1: {
+                    'header': _('Initial balance'),
+                    'field': 'initial_balance',
+                    'type': 'amount',
+                    'width': 14,
+                },
+                2: {
+                    'header': _('Debit'),
+                    'field': 'debit',
+                    'type': 'amount',
+                    'width': 14,
+                },
+                3: {
+                    'header': _('Credit'),
+                    'field': 'credit',
+                    'type': 'amount',
+                    'width': 14,
+                },
+                4: {
+                    'header': _('Ending balance'),
+                    'field': 'final_balance',
+                    'type': 'amount',
+                    'width': 14,
+                },
+            }
+            if report.show_partner_details
+            else {
                 0: {'header': _('Code'), 'field': 'code', 'width': 10},
                 1: {'header': _('Account'), 'field': 'name', 'width': 60},
-                2: {'header': _('Initial balance'),
+                2: {
+                    'header': _('Initial balance'),
                     'field': 'initial_balance',
                     'type': 'amount',
-                    'width': 14},
-                3: {'header': _('Debit'),
+                    'width': 14,
+                },
+                3: {
+                    'header': _('Debit'),
                     'field': 'debit',
                     'type': 'amount',
-                    'width': 14},
-                4: {'header': _('Credit'),
+                    'width': 14,
+                },
+                4: {
+                    'header': _('Credit'),
                     'field': 'credit',
                     'type': 'amount',
-                    'width': 14},
-                5: {'header': _('Ending balance'),
+                    'width': 14,
+                },
+                5: {
+                    'header': _('Ending balance'),
                     'field': 'final_balance',
                     'type': 'amount',
-                    'width': 14},
+                    'width': 14,
+                },
             }
-        else:
-            return {
-                0: {'header': _('Partner'), 'field': 'name', 'width': 70},
-                1: {'header': _('Initial balance'),
-                    'field': 'initial_balance',
-                    'type': 'amount',
-                    'width': 14},
-                2: {'header': _('Debit'),
-                    'field': 'debit',
-                    'type': 'amount',
-                    'width': 14},
-                3: {'header': _('Credit'),
-                    'field': 'credit',
-                    'type': 'amount',
-                    'width': 14},
-                4: {'header': _('Ending balance'),
-                    'field': 'final_balance',
-                    'type': 'amount',
-                    'width': 14},
-            }
+        )
 
     def _get_report_filters(self, report):
         return [
@@ -92,7 +109,7 @@ class TrialBalanceXslx(abstract_report_xlsx.AbstractReportXslx):
 
             else:
                 # Write account title
-                self.write_array_title(account.code + ' - ' + account.name)
+                self.write_array_title(f'{account.code} - {account.name}')
 
                 # Display array header for partner lines
                 self.write_array_header()
@@ -103,8 +120,7 @@ class TrialBalanceXslx(abstract_report_xlsx.AbstractReportXslx):
                     self.write_line(partner)
 
                 # Display account footer line
-                self.write_account_footer(account,
-                                          account.code + ' - ' + account.name)
+                self.write_account_footer(account, f'{account.code} - {account.name}')
 
                 # Line break
                 self.row_pos += 2

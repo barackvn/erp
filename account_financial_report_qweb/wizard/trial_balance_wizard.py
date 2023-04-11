@@ -87,7 +87,7 @@ class TrialBalanceReportWizard(models.TransientModel):
                 domain += [('internal_type', 'in', ('receivable', 'payable'))]
             elif self.receivable_accounts_only:
                 domain += [('internal_type', '=', 'receivable')]
-            elif self.payable_accounts_only:
+            else:
                 domain += [('internal_type', '=', 'payable')]
             self.account_ids = self.env['account.account'].search(domain)
         else:

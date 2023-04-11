@@ -54,7 +54,9 @@ class asiento_cierre_contable(models.Model):
 			if self.asiento_1.id:
 				if self.asiento_1.state != 'draft':
 					self.asiento_1.button_cancel()
-				self.env.cr.execute(""" delete from account_move_line where move_id = """+ str(self.asiento_1.id))
+				self.env.cr.execute(
+					f""" delete from account_move_line where move_id = {str(self.asiento_1.id)}"""
+				)
 				self.asiento_1.unlink()
 
 		elif self.state == '2':
@@ -62,7 +64,9 @@ class asiento_cierre_contable(models.Model):
 			if self.asiento_2.id:
 				if self.asiento_2.state != 'draft':
 					self.asiento_2.button_cancel()
-				self.env.cr.execute(""" delete from account_move_line where move_id = """+ str(self.asiento_2.id))
+				self.env.cr.execute(
+					f""" delete from account_move_line where move_id = {str(self.asiento_2.id)}"""
+				)
 				self.asiento_2.unlink()
 
 		elif self.state == '3':
@@ -70,7 +74,9 @@ class asiento_cierre_contable(models.Model):
 			if self.asiento_3.id:
 				if self.asiento_3.state != 'draft':
 					self.asiento_3.button_cancel()
-				self.env.cr.execute(""" delete from account_move_line where move_id = """+ str(self.asiento_3.id))
+				self.env.cr.execute(
+					f""" delete from account_move_line where move_id = {str(self.asiento_3.id)}"""
+				)
 				self.asiento_3.unlink()
 
 		elif self.state == '4':
@@ -78,7 +84,9 @@ class asiento_cierre_contable(models.Model):
 			if self.asiento_4.id:
 				if self.asiento_4.state != 'draft':
 					self.asiento_4.button_cancel()
-				self.env.cr.execute(""" delete from account_move_line where move_id = """+ str(self.asiento_4.id))
+				self.env.cr.execute(
+					f""" delete from account_move_line where move_id = {str(self.asiento_4.id)}"""
+				)
 				self.asiento_4.unlink()
 
 		elif self.state == '5':
@@ -86,7 +94,9 @@ class asiento_cierre_contable(models.Model):
 			if self.asiento_5.id:
 				if self.asiento_5.state != 'draft':
 					self.asiento_5.button_cancel()
-				self.env.cr.execute(""" delete from account_move_line where move_id = """+ str(self.asiento_5.id))
+				self.env.cr.execute(
+					f""" delete from account_move_line where move_id = {str(self.asiento_5.id)}"""
+				)
 				self.asiento_5.unlink()
 
 		elif self.state == '6':
@@ -94,7 +104,9 @@ class asiento_cierre_contable(models.Model):
 			if self.asiento_6.id:
 				if self.asiento_6.state != 'draft':
 					self.asiento_6.button_cancel()
-				self.env.cr.execute(""" delete from account_move_line where move_id = """+ str(self.asiento_6.id))
+				self.env.cr.execute(
+					f""" delete from account_move_line where move_id = {str(self.asiento_6.id)}"""
+				)
 				self.asiento_6.unlink()
 
 		elif self.state == '7':
@@ -102,7 +114,9 @@ class asiento_cierre_contable(models.Model):
 			if self.asiento_7.id:
 				if self.asiento_7.state != 'draft':
 					self.asiento_7.button_cancel()
-				self.env.cr.execute(""" delete from account_move_line where move_id = """+ str(self.asiento_7.id))
+				self.env.cr.execute(
+					f""" delete from account_move_line where move_id = {str(self.asiento_7.id)}"""
+				)
 				self.asiento_7.unlink()
 
 		elif self.state == '8':
@@ -110,7 +124,9 @@ class asiento_cierre_contable(models.Model):
 			if self.asiento_8.id:
 				if self.asiento_8.state != 'draft':
 					self.asiento_8.button_cancel()
-				self.env.cr.execute(""" delete from account_move_line where move_id = """+ str(self.asiento_8.id))
+				self.env.cr.execute(
+					f""" delete from account_move_line where move_id = {str(self.asiento_8.id)}"""
+				)
 				self.asiento_8.unlink()
 
 		elif self.state == '9':
@@ -118,7 +134,9 @@ class asiento_cierre_contable(models.Model):
 			if self.asiento_9.id:
 				if self.asiento_9.state != 'draft':
 					self.asiento_9.button_cancel()
-				self.env.cr.execute(""" delete from account_move_line where move_id = """+ str(self.asiento_9.id))
+				self.env.cr.execute(
+					f""" delete from account_move_line where move_id = {str(self.asiento_9.id)}"""
+				)
 				self.asiento_9.unlink()
 
 	@api.one
@@ -131,18 +149,26 @@ class asiento_cierre_contable(models.Model):
 	@api.one
 	def cierre_contable_0(self):
 
-		periodini = self.env['account.period'].search([('code','=','00/'+ self.anio_fiscal.name)])
+		periodini = self.env['account.period'].search(
+			[('code', '=', f'00/{self.anio_fiscal.name}')]
+		)
 		if len(periodini)>0:
 			periodini = periodini[0]
 		else:
-			periodini = self.env['account.period'].search([('code','=','01/'+ self.anio_fiscal.name)])[0]
+			periodini = self.env['account.period'].search(
+				[('code', '=', f'01/{self.anio_fiscal.name}')]
+			)[0]
 
 
-		periodfin = self.env['account.period'].search([('code','=','13/'+ self.anio_fiscal.name)])
+		periodfin = self.env['account.period'].search(
+			[('code', '=', f'13/{self.anio_fiscal.name}')]
+		)
 		if len(periodfin)>0:
 			periodfin = periodfin[0]
 		else:
-			periodfin = self.env['account.period'].search([('code','=','12/'+ self.anio_fiscal.name)])[0]
+			periodfin = self.env['account.period'].search(
+				[('code', '=', f'12/{self.anio_fiscal.name}')]
+			)[0]
 
 
 		hoja = self.env['account.sheet.work.detalle.wizard'].create({'type_show':'pantalla','period_ini':periodini.id,'period_end':periodfin.id,'wizrd_level_sheet':'2','fiscalyear_id':periodini.fiscalyear_id.id})
@@ -174,28 +200,30 @@ class asiento_cierre_contable(models.Model):
 
 		for i in tabla:
 			linea_i = {
-					'name':'Asiento Cierre: Costo Ventas',
-					'account_id':i['cuenta_id'],
-					'debit':  0 if i['saldodeudor']-i['saldoacredor'] > 0 else i['saldoacredor']-i['saldodeudor'],
-					'credit': i['saldodeudor']-i['saldoacredor'] if i['saldodeudor']-i['saldoacredor'] > 0 else 0,
-					#'period_id':asiento.period_id.id,
-					'journal_id':asiento.journal_id.id,
-					'move_id': asiento.id,
-				}
+				'name': 'Asiento Cierre: Costo Ventas',
+				'account_id': i['cuenta_id'],
+				'debit': 0
+				if i['saldodeudor'] - i['saldoacredor'] > 0
+				else i['saldoacredor'] - i['saldodeudor'],
+				'credit': max(i['saldodeudor'] - i['saldoacredor'], 0),
+				'journal_id': asiento.journal_id.id,
+				'move_id': asiento.id,
+			}
 
 			self.env.cr.execute("""
 				insert into account_move_line(create_uid, name,account_id,debit,credit,journal_id,move_id,company_id,date) ValUeS ("""+ STR(self.env.uid)+ """,'""" + linea_i['name'] + """',""" + str(linea_i['account_id']) + """,""" + str(linea_i['debit']) + """,""" + str(linea_i['credit']) + """,""" +  str(linea_i['journal_id']) + """,""" + str(asiento.id) + """,1,'"""+str(asiento.date)+"""');
 			 """)
 
 			linea_i = {
-					'name':'Asiento Cierre: Costo Ventas',
-					'account_id':i['cuenta_cierre'],
-					'debit': i['saldodeudor']-i['saldoacredor'] if i['saldodeudor']-i['saldoacredor'] > 0 else 0,
-					'credit': 0 if i['saldodeudor']-i['saldoacredor'] > 0 else i['saldoacredor']-i['saldodeudor'],
-					#'period_id':asiento.period_id.id,
-					'journal_id':asiento.journal_id.id,
-					'move_id': asiento.id,
-				}
+				'name': 'Asiento Cierre: Costo Ventas',
+				'account_id': i['cuenta_cierre'],
+				'debit': max(i['saldodeudor'] - i['saldoacredor'], 0),
+				'credit': 0
+				if i['saldodeudor'] - i['saldoacredor'] > 0
+				else i['saldoacredor'] - i['saldodeudor'],
+				'journal_id': asiento.journal_id.id,
+				'move_id': asiento.id,
+			}
 			self.env.cr.execute("""
 				insert into account_move_line(create_uid, name,account_id,debit,credit,journal_id,move_id,company_id,date) ValUeS ("""+ STR(self.env.uid)+ """,'""" + linea_i['name'] + """',""" + str(linea_i['account_id']) + """,""" + str(linea_i['debit']) + """,""" + str(linea_i['credit']) + """,""" +  str(linea_i['journal_id']) + """,""" + str(asiento.id) + """,1,'"""+str(asiento.date)+"""');
 			 """)
@@ -221,15 +249,16 @@ class asiento_cierre_contable(models.Model):
 		self.asiento_2 = asiento.id
 
 		for i in tabla:
-			linea_i ={
-					'name':'Asiento Cierre: Cancelacion Clase 9',
-					'account_id':i['cuenta_id'],
-					'debit':  0 if i['saldodeudor']-i['saldoacredor'] > 0 else i['saldoacredor']-i['saldodeudor'],
-					'credit': i['saldodeudor']-i['saldoacredor'] if i['saldodeudor']-i['saldoacredor'] > 0 else 0,
-					#'period_id':asiento.period_id.id,
-					'journal_id':asiento.journal_id.id,
-					'move_id': asiento.id,
-				}
+			linea_i = {
+				'name': 'Asiento Cierre: Cancelacion Clase 9',
+				'account_id': i['cuenta_id'],
+				'debit': 0
+				if i['saldodeudor'] - i['saldoacredor'] > 0
+				else i['saldoacredor'] - i['saldodeudor'],
+				'credit': max(i['saldodeudor'] - i['saldoacredor'], 0),
+				'journal_id': asiento.journal_id.id,
+				'move_id': asiento.id,
+			}
 			self.env.cr.execute("""
 				insert into account_move_line(create_uid, name,account_id,debit,credit,journal_id,move_id,company_id,date) ValUeS ("""+ STR(self.env.uid)+ """,'""" + linea_i['name'] + """',""" + str(linea_i['account_id']) + """,""" + str(linea_i['debit']) + """,""" + str(linea_i['credit']) + """,""" +  str(linea_i['journal_id']) + """,""" + str(asiento.id) + """,1,'"""+str(asiento.date)+"""');
 			 """)
@@ -263,33 +292,33 @@ class asiento_cierre_contable(models.Model):
 
 		for i in tabla:
 			linea_i = {
-					'name':'Asiento Cierre: Margen Comercial',
-					'account_id':i['cuenta_id'],
-					'debit':  0 if i['saldodeudor']-i['saldoacredor'] > 0 else i['saldoacredor']-i['saldodeudor'],
-					'credit': i['saldodeudor']-i['saldoacredor'] if i['saldodeudor']-i['saldoacredor'] > 0 else 0,
-					#'period_id':asiento.period_id.id,
-					'journal_id':asiento.journal_id.id,
-					'move_id': asiento.id,
-				}
+				'name': 'Asiento Cierre: Margen Comercial',
+				'account_id': i['cuenta_id'],
+				'debit': 0
+				if i['saldodeudor'] - i['saldoacredor'] > 0
+				else i['saldoacredor'] - i['saldodeudor'],
+				'credit': max(i['saldodeudor'] - i['saldoacredor'], 0),
+				'journal_id': asiento.journal_id.id,
+				'move_id': asiento.id,
+			}
 			self.env.cr.execute("""
 				insert into account_move_line(create_uid, name,account_id,debit,credit,journal_id,move_id,company_id,date) ValUeS ("""+ STR(self.env.uid)+ """,'""" + linea_i['name'] + """',""" + str(linea_i['account_id']) + """,""" + str(linea_i['debit']) + """,""" + str(linea_i['credit']) + """,""" +  str(linea_i['journal_id']) + """,""" + str(asiento.id) + """,1,'"""+str(asiento.date)+"""');
 			 """)
 
 			a1 = 0 if i['saldodeudor']-i['saldoacredor'] > 0 else i['saldoacredor']-i['saldodeudor']
-			a2 = i['saldodeudor']-i['saldoacredor'] if i['saldodeudor']-i['saldoacredor'] > 0 else 0
+			a2 = max(i['saldodeudor']-i['saldoacredor'], 0)
 			total += a1 - a2
 
 		self.dat1 = total
 
-		linea_i ={
-				'name':'Asiento Cierre: Margen Comercial',
-				'account_id':cuenta_cuadre,
-				'debit':  0 if total > 0 else -total,
-				'credit': total if total > 0 else 0,
-					#'period_id':asiento.period_id.id,
-					'journal_id':asiento.journal_id.id,
-				'move_id': asiento.id,
-			}
+		linea_i = {
+			'name': 'Asiento Cierre: Margen Comercial',
+			'account_id': cuenta_cuadre,
+			'debit': 0 if total > 0 else -total,
+			'credit': max(total, 0),
+			'journal_id': asiento.journal_id.id,
+			'move_id': asiento.id,
+		}
 		self.env.cr.execute("""
 				insert into account_move_line(create_uid, name,account_id,debit,credit,journal_id,move_id,company_id,date) ValUeS ("""+ STR(self.env.uid)+ """,'""" + linea_i['name'] + """',""" + str(linea_i['account_id']) + """,""" + str(linea_i['debit']) + """,""" + str(linea_i['credit']) + """,""" +  str(linea_i['journal_id']) + """,""" + str(asiento.id) + """,1,'"""+str(asiento.date)+"""');
 			 """)
@@ -322,33 +351,33 @@ class asiento_cierre_contable(models.Model):
 		total = 0
 
 		for i in tabla:
-			linea_i ={
-					'name':'Asiento Cierre: Produccion del Ejercicio',
-					'account_id':i['cuenta_id'],
-					'debit':  0 if i['saldodeudor']-i['saldoacredor'] > 0 else i['saldoacredor']-i['saldodeudor'],
-					'credit': i['saldodeudor']-i['saldoacredor'] if i['saldodeudor']-i['saldoacredor'] > 0 else 0,
-					#'period_id':asiento.period_id.id,
-					'journal_id':asiento.journal_id.id,
-					'move_id': asiento.id,
-				}
+			linea_i = {
+				'name': 'Asiento Cierre: Produccion del Ejercicio',
+				'account_id': i['cuenta_id'],
+				'debit': 0
+				if i['saldodeudor'] - i['saldoacredor'] > 0
+				else i['saldoacredor'] - i['saldodeudor'],
+				'credit': max(i['saldodeudor'] - i['saldoacredor'], 0),
+				'journal_id': asiento.journal_id.id,
+				'move_id': asiento.id,
+			}
 			self.env.cr.execute("""
 				insert into account_move_line(create_uid, name,account_id,debit,credit,journal_id,move_id,company_id,date) ValUeS ("""+ STR(self.env.uid)+ """,'""" + linea_i['name'] + """',""" + str(linea_i['account_id']) + """,""" + str(linea_i['debit']) + """,""" + str(linea_i['credit']) + """,""" +  str(linea_i['journal_id']) + """,""" + str(asiento.id) + """,1,'"""+str(asiento.date)+"""');
 			 """)
 			a1 = 0 if i['saldodeudor']-i['saldoacredor'] > 0 else i['saldoacredor']-i['saldodeudor']
-			a2 = i['saldodeudor']-i['saldoacredor'] if i['saldodeudor']-i['saldoacredor'] > 0 else 0
+			a2 = max(i['saldodeudor']-i['saldoacredor'], 0)
 			total += a1 - a2
 
 		self.dat2 = total
 
-		linea_i ={
-				'name':'Asiento Cierre: Produccion del Ejercicio',
-				'account_id':cuenta_cuadre,
-				'debit':  0 if total > 0 else -total,
-				'credit': total if total > 0 else 0,
-					#'period_id':asiento.period_id.id,
-					'journal_id':asiento.journal_id.id,
-				'move_id': asiento.id,
-			}
+		linea_i = {
+			'name': 'Asiento Cierre: Produccion del Ejercicio',
+			'account_id': cuenta_cuadre,
+			'debit': 0 if total > 0 else -total,
+			'credit': max(total, 0),
+			'journal_id': asiento.journal_id.id,
+			'move_id': asiento.id,
+		}
 		self.env.cr.execute("""
 				insert into account_move_line(create_uid, name,account_id,debit,credit,journal_id,move_id,company_id,date) ValUeS ("""+ STR(self.env.uid)+ """,'""" + linea_i['name'] + """',""" + str(linea_i['account_id']) + """,""" + str(linea_i['debit']) + """,""" + str(linea_i['credit']) + """,""" +  str(linea_i['journal_id']) + """,""" + str(asiento.id) + """,1,'"""+str(asiento.date)+"""');
 			 """)
@@ -381,33 +410,33 @@ class asiento_cierre_contable(models.Model):
 		total = 0
 
 		for i in tabla:
-			linea_i ={
-					'name':'Asiento Cierre: Valor Agregado',
-					'account_id':i['cuenta_id'],
-					'debit':  0 if i['saldodeudor']-i['saldoacredor'] > 0 else i['saldoacredor']-i['saldodeudor'],
-					'credit': i['saldodeudor']-i['saldoacredor'] if i['saldodeudor']-i['saldoacredor'] > 0 else 0,
-					#'period_id':asiento.period_id.id,
-					'journal_id':asiento.journal_id.id,
-					'move_id': asiento.id,
-				}
+			linea_i = {
+				'name': 'Asiento Cierre: Valor Agregado',
+				'account_id': i['cuenta_id'],
+				'debit': 0
+				if i['saldodeudor'] - i['saldoacredor'] > 0
+				else i['saldoacredor'] - i['saldodeudor'],
+				'credit': max(i['saldodeudor'] - i['saldoacredor'], 0),
+				'journal_id': asiento.journal_id.id,
+				'move_id': asiento.id,
+			}
 			self.env.cr.execute("""
 				insert into account_move_line(create_uid, name,account_id,debit,credit,journal_id,move_id,company_id,date) ValUeS ("""+ STR(self.env.uid)+ """,'""" + linea_i['name'] + """',""" + str(linea_i['account_id']) + """,""" + str(linea_i['debit']) + """,""" + str(linea_i['credit']) + """,""" +  str(linea_i['journal_id']) + """,""" + str(asiento.id) + """,1,'"""+str(asiento.date)+"""');
 			 """)
 			a1 = 0 if i['saldodeudor']-i['saldoacredor'] > 0 else i['saldoacredor']-i['saldodeudor']
-			a2 = i['saldodeudor']-i['saldoacredor'] if i['saldodeudor']-i['saldoacredor'] > 0 else 0
+			a2 = max(i['saldodeudor']-i['saldoacredor'], 0)
 			total += a1 - a2
 
 		self.dat3 = self.dat1 + self.dat2 + total
 
-		linea_i ={
-				'name':'Asiento Cierre: Valor Agregado',
-				'account_id':cuenta_cuadre,
-				'debit':  0 if total > 0 else -total,
-				'credit': total if total > 0 else 0,
-					#'period_id':asiento.period_id.id,
-					'journal_id':asiento.journal_id.id,
-				'move_id': asiento.id,
-			}
+		linea_i = {
+			'name': 'Asiento Cierre: Valor Agregado',
+			'account_id': cuenta_cuadre,
+			'debit': 0 if total > 0 else -total,
+			'credit': max(total, 0),
+			'journal_id': asiento.journal_id.id,
+			'move_id': asiento.id,
+		}
 
 		self.env.cr.execute("""
 				insert into account_move_line(create_uid, name,account_id,debit,credit,journal_id,move_id,company_id,date) ValUeS ("""+ STR(self.env.uid)+ """,'""" + linea_i['name'] + """',""" + str(linea_i['account_id']) + """,""" + str(linea_i['debit']) + """,""" + str(linea_i['credit']) + """,""" +  str(linea_i['journal_id']) + """,""" + str(asiento.id) + """,1,'"""+str(asiento.date)+"""');
@@ -440,33 +469,33 @@ class asiento_cierre_contable(models.Model):
 		total = 0
 
 		for i in tabla:
-			linea_i ={
-					'name':'Asiento Cierre: Excedente o insuficiencia',
-					'account_id':i['cuenta_id'],
-					'debit':  0 if i['saldodeudor']-i['saldoacredor'] > 0 else i['saldoacredor']-i['saldodeudor'],
-					'credit': i['saldodeudor']-i['saldoacredor'] if i['saldodeudor']-i['saldoacredor'] > 0 else 0,
-					#'period_id':asiento.period_id.id,
-					'journal_id':asiento.journal_id.id,
-					'move_id': asiento.id,
-				}
+			linea_i = {
+				'name': 'Asiento Cierre: Excedente o insuficiencia',
+				'account_id': i['cuenta_id'],
+				'debit': 0
+				if i['saldodeudor'] - i['saldoacredor'] > 0
+				else i['saldoacredor'] - i['saldodeudor'],
+				'credit': max(i['saldodeudor'] - i['saldoacredor'], 0),
+				'journal_id': asiento.journal_id.id,
+				'move_id': asiento.id,
+			}
 			self.env.cr.execute("""
 				insert into account_move_line(create_uid, name,account_id,debit,credit,journal_id,move_id,company_id,date) ValUeS ("""+ STR(self.env.uid)+ """,'""" + linea_i['name'] + """',""" + str(linea_i['account_id']) + """,""" + str(linea_i['debit']) + """,""" + str(linea_i['credit']) + """,""" +  str(linea_i['journal_id']) + """,""" + str(asiento.id) + """,1,'"""+str(asiento.date)+"""');
 			 """)
 			a1 = 0 if i['saldodeudor']-i['saldoacredor'] > 0 else i['saldoacredor']-i['saldodeudor']
-			a2 = i['saldodeudor']-i['saldoacredor'] if i['saldodeudor']-i['saldoacredor'] > 0 else 0
+			a2 = max(i['saldodeudor']-i['saldoacredor'], 0)
 			total += a1 - a2
 
 		self.dat4 = self.dat3 + total
 
-		linea_i ={
-				'name':'Asiento Cierre: Excedente o insuficiencia',
-				'account_id':cuenta_cuadre,
-				'debit':  0 if total > 0 else -total,
-				'credit': total if total > 0 else 0,
-					#'period_id':asiento.period_id.id,
-					'journal_id':asiento.journal_id.id,
-				'move_id': asiento.id,
-			}
+		linea_i = {
+			'name': 'Asiento Cierre: Excedente o insuficiencia',
+			'account_id': cuenta_cuadre,
+			'debit': 0 if total > 0 else -total,
+			'credit': max(total, 0),
+			'journal_id': asiento.journal_id.id,
+			'move_id': asiento.id,
+		}
 		self.env.cr.execute("""
 				insert into account_move_line(create_uid, name,account_id,debit,credit,journal_id,move_id,company_id,date) ValUeS ("""+ STR(self.env.uid)+ """,'""" + linea_i['name'] + """',""" + str(linea_i['account_id']) + """,""" + str(linea_i['debit']) + """,""" + str(linea_i['credit']) + """,""" +  str(linea_i['journal_id']) + """,""" + str(asiento.id) + """,1,'"""+str(asiento.date)+"""');
 			 """)
@@ -500,33 +529,33 @@ class asiento_cierre_contable(models.Model):
 		total = 0
 
 		for i in tabla:
-			linea_i ={
-					'name':'Asiento Cierre: Resultado de explotacion',
-					'account_id':i['cuenta_id'],
-					'debit':  0 if i['saldodeudor']-i['saldoacredor'] > 0 else i['saldoacredor']-i['saldodeudor'],
-					#'period_id':asiento.period_id.id,
-					'journal_id':asiento.journal_id.id,
-					'credit': i['saldodeudor']-i['saldoacredor'] if i['saldodeudor']-i['saldoacredor'] > 0 else 0,
-					'move_id': asiento.id,
-				}
+			linea_i = {
+				'name': 'Asiento Cierre: Resultado de explotacion',
+				'account_id': i['cuenta_id'],
+				'debit': 0
+				if i['saldodeudor'] - i['saldoacredor'] > 0
+				else i['saldoacredor'] - i['saldodeudor'],
+				'journal_id': asiento.journal_id.id,
+				'credit': max(i['saldodeudor'] - i['saldoacredor'], 0),
+				'move_id': asiento.id,
+			}
 			self.env.cr.execute("""
 				insert into account_move_line(create_uid, name,account_id,debit,credit,journal_id,move_id,company_id,date) ValUeS ("""+ STR(self.env.uid)+ """,'""" + linea_i['name'] + """',""" + str(linea_i['account_id']) + """,""" + str(linea_i['debit']) + """,""" + str(linea_i['credit']) + """,""" +  str(linea_i['journal_id']) + """,""" + str(asiento.id) + """,1,'"""+str(asiento.date)+"""');
 			 """)
 			a1 = 0 if i['saldodeudor']-i['saldoacredor'] > 0 else i['saldoacredor']-i['saldodeudor']
-			a2 = i['saldodeudor']-i['saldoacredor'] if i['saldodeudor']-i['saldoacredor'] > 0 else 0
+			a2 = max(i['saldodeudor']-i['saldoacredor'], 0)
 			total += a1 - a2
 
 		self.dat5 = self.dat4 + total
 
-		linea_i ={
-				'name':'Asiento Cierre: Resultado de explotacion',
-				'account_id':cuenta_cuadre,
-				'debit':  0 if total > 0 else -total,
-				'credit': total if total > 0 else 0,
-					#'period_id':asiento.period_id.id,
-					'journal_id':asiento.journal_id.id,
-				'move_id': asiento.id,
-			}
+		linea_i = {
+			'name': 'Asiento Cierre: Resultado de explotacion',
+			'account_id': cuenta_cuadre,
+			'debit': 0 if total > 0 else -total,
+			'credit': max(total, 0),
+			'journal_id': asiento.journal_id.id,
+			'move_id': asiento.id,
+		}
 		self.env.cr.execute("""
 				insert into account_move_line(create_uid, name,account_id,debit,credit,journal_id,move_id,company_id,date) ValUeS ("""+ STR(self.env.uid)+ """,'""" + linea_i['name'] + """',""" + str(linea_i['account_id']) + """,""" + str(linea_i['debit']) + """,""" + str(linea_i['credit']) + """,""" +  str(linea_i['journal_id']) + """,""" + str(asiento.id) + """,1,'"""+str(asiento.date)+"""');
 			 """)
@@ -559,35 +588,35 @@ class asiento_cierre_contable(models.Model):
 		total = 0
 
 		for i in tabla:
-			linea_i ={
-					'name':'Asiento Cierre: Resultado antes de participaciones',
-					'account_id':i['cuenta_id'],
-					'debit':  0 if i['saldodeudor']-i['saldoacredor'] > 0 else i['saldoacredor']-i['saldodeudor'],
-					'credit': i['saldodeudor']-i['saldoacredor'] if i['saldodeudor']-i['saldoacredor'] > 0 else 0,
-					#'period_id':asiento.period_id.id,
-					'journal_id':asiento.journal_id.id,
-					'move_id': asiento.id,
-				}
+			linea_i = {
+				'name': 'Asiento Cierre: Resultado antes de participaciones',
+				'account_id': i['cuenta_id'],
+				'debit': 0
+				if i['saldodeudor'] - i['saldoacredor'] > 0
+				else i['saldoacredor'] - i['saldodeudor'],
+				'credit': max(i['saldodeudor'] - i['saldoacredor'], 0),
+				'journal_id': asiento.journal_id.id,
+				'move_id': asiento.id,
+			}
 			self.env.cr.execute("""
 				insert into account_move_line(create_uid, name,account_id,debit,credit,journal_id,move_id,company_id,date) ValUeS ("""+ STR(self.env.uid)+ """,'""" + linea_i['name'] + """',""" + str(linea_i['account_id']) + """,""" + str(linea_i['debit']) + """,""" + str(linea_i['credit']) + """,""" +  str(linea_i['journal_id']) + """,""" + str(asiento.id) + """,1,'"""+str(asiento.date)+"""');
 			 """)
 			a1 = 0 if i['saldodeudor']-i['saldoacredor'] > 0 else i['saldoacredor']-i['saldodeudor']
-			a2 = i['saldodeudor']-i['saldoacredor'] if i['saldodeudor']-i['saldoacredor'] > 0 else 0
+			a2 = max(i['saldodeudor']-i['saldoacredor'], 0)
 			total += a1 - a2
 
 
 		self.dat6 = self.dat5 + total
 
 
-		linea_i ={
-				'name':'Asiento Cierre: Resultado antes de participaciones',
-				'account_id':cuenta_cuadre,
-				'debit':  0 if total > 0 else -total,
-				'credit': total if total > 0 else 0,
-					#'period_id':asiento.period_id.id,
-					'journal_id':asiento.journal_id.id,
-				'move_id': asiento.id,
-			}
+		linea_i = {
+			'name': 'Asiento Cierre: Resultado antes de participaciones',
+			'account_id': cuenta_cuadre,
+			'debit': 0 if total > 0 else -total,
+			'credit': max(total, 0),
+			'journal_id': asiento.journal_id.id,
+			'move_id': asiento.id,
+		}
 		self.env.cr.execute("""
 				insert into account_move_line(create_uid, name,account_id,debit,credit,journal_id,move_id,company_id,date) ValUeS ("""+ STR(self.env.uid)+ """,'""" + linea_i['name'] + """',""" + str(linea_i['account_id']) + """,""" + str(linea_i['debit']) + """,""" + str(linea_i['credit']) + """,""" +  str(linea_i['journal_id']) + """,""" + str(asiento.id) + """,1,'"""+str(asiento.date)+"""');
 			 """)
@@ -621,32 +650,32 @@ class asiento_cierre_contable(models.Model):
 		total = 0
 
 		for i in tabla:
-			linea_i ={
-					'name':'Asiento Cierre: Cierre de activo y pasivo',
-					'account_id':i['cuenta_id'],
-					'debit':  0 if i['saldodeudor']-i['saldoacredor'] > 0 else i['saldoacredor']-i['saldodeudor'],
-					'credit': i['saldodeudor']-i['saldoacredor'] if i['saldodeudor']-i['saldoacredor'] > 0 else 0,
-					#'period_id':asiento.period_id.id,
-					'journal_id':asiento.journal_id.id,
-					'move_id': asiento.id,
-				}
+			linea_i = {
+				'name': 'Asiento Cierre: Cierre de activo y pasivo',
+				'account_id': i['cuenta_id'],
+				'debit': 0
+				if i['saldodeudor'] - i['saldoacredor'] > 0
+				else i['saldoacredor'] - i['saldodeudor'],
+				'credit': max(i['saldodeudor'] - i['saldoacredor'], 0),
+				'journal_id': asiento.journal_id.id,
+				'move_id': asiento.id,
+			}
 			self.env.cr.execute("""
 				insert into account_move_line(create_uid, name,account_id,debit,credit,journal_id,move_id,company_id,date) ValUeS ("""+ STR(self.env.uid)+ """,'""" + linea_i['name'] + """',""" + str(linea_i['account_id']) + """,""" + str(linea_i['debit']) + """,""" + str(linea_i['credit']) + """,""" +  str(linea_i['journal_id']) + """,""" + str(asiento.id) + """,1,'"""+str(asiento.date)+"""');
 			 """)
 			a1 = 0 if i['saldodeudor']-i['saldoacredor'] > 0 else i['saldoacredor']-i['saldodeudor']
-			a2 = i['saldodeudor']-i['saldoacredor'] if i['saldodeudor']-i['saldoacredor'] > 0 else 0
+			a2 = max(i['saldodeudor']-i['saldoacredor'], 0)
 			total += a1 - a2
 
 
-		linea_i ={
-				'name':'Asiento Cierre: Cierre de activo y pasivo',
-				'account_id':cuenta_cuadre,
-				'debit':  0 if total > 0 else -total,
-				'credit': total if total > 0 else 0,
-					#'period_id':asiento.period_id.id,
-					'journal_id':asiento.journal_id.id,
-				'move_id': asiento.id,
-			}
+		linea_i = {
+			'name': 'Asiento Cierre: Cierre de activo y pasivo',
+			'account_id': cuenta_cuadre,
+			'debit': 0 if total > 0 else -total,
+			'credit': max(total, 0),
+			'journal_id': asiento.journal_id.id,
+			'move_id': asiento.id,
+		}
 		self.env.cr.execute("""
 				insert into account_move_line(create_uid, name,account_id,debit,credit,journal_id,move_id,company_id,date) ValUeS ("""+ STR(self.env.uid)+ """,'""" + linea_i['name'] + """',""" + str(linea_i['account_id']) + """,""" + str(linea_i['debit']) + """,""" + str(linea_i['credit']) + """,""" +  str(linea_i['journal_id']) + """,""" + str(asiento.id) + """,1,'"""+str(asiento.date)+"""');
 			 """)

@@ -142,7 +142,7 @@ class account_move(models.Model):
 		direccion = self.env['main.parameter'].search([])[0].dir_create_file
 		if not direccion:
 			raise osv.except_osv('Alerta!', "No fue configurado el directorio para los archivos en Configuración.")
-		workbook = Workbook( direccion + 'tempo_account_move_line.xlsx')
+		workbook = Workbook(f'{direccion}tempo_account_move_line.xlsx')
 		worksheet = workbook.add_worksheet("Asiento Contable")
 		bold = workbook.add_format({'bold': True})
 		normal = workbook.add_format()
@@ -153,8 +153,8 @@ class account_move(models.Model):
 		bord = workbook.add_format()
 		bord.set_border(style=1)
 		numberdos.set_border(style=1)
-		numbertres.set_border(style=1)			
-		x= 6				
+		numbertres.set_border(style=1)
+		x= 6
 		tam_col = [12,12,12,12,12,12,12,12,12,12,12,12,12,12,12,12,12,12,12,12,12,12,12,12,12,12,12,12,12,12,12,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0]
 		tam_letra = 1.1
 		import sys
@@ -168,22 +168,22 @@ class account_move(models.Model):
 		worksheet.write(1,0, "Diario:", bold)
 
 		worksheet.write(1,1, self.journal_id.name, normal)
-	
-	
+
+
 		worksheet.write(3,0, "Empresa:",bold)
-		
-		worksheet.write(3,1, self.partner_id.name if self.partner_id.name else '', normal)
-		
+
+		worksheet.write(3, 1, self.partner_id.name or '', normal)
+			
 
 		worksheet.write(1,2, "Referencia:", bold)
-		
-		worksheet.write(1,3, self.ref if self.ref else "", normal)
-		
+
+		worksheet.write(1, 3, self.ref or "", normal)
+			
 
 		worksheet.write(2,2, "Fecha:", bold)
-		
-		worksheet.write(2,3, self.date if self.date else "", normal)
-		
+
+		worksheet.write(2, 3, self.date or "", normal)
+			
 
 
 
@@ -207,20 +207,20 @@ class account_move(models.Model):
 
 		dict_state = {'draft':'Descuadrado','valid':'Cuadrado'}
 		for line in self.line_ids:
-			worksheet.write(x,1,line.name if line.name  else '',bord )
-			worksheet.write(x,2,line.partner_id.name if line.partner_id.name  else '',bord)
-			worksheet.write(x,3,line.nro_comprobante if line.nro_comprobante  else '',bord)
-			worksheet.write(x,4,line.account_id.code if line.account_id.code  else '',bord)
-			worksheet.write(x,5,line.date_maturity if line.date_maturity  else '',bord)
+			worksheet.write(x, 1, line.name or '', bord)
+			worksheet.write(x, 2, line.partner_id.name or '', bord)
+			worksheet.write(x, 3, line.nro_comprobante or '', bord)
+			worksheet.write(x, 4, line.account_id.code or '', bord)
+			worksheet.write(x, 5, line.date_maturity or '', bord)
 			worksheet.write(x,6,line.debit ,numberdos)
 			worksheet.write(x,7,line.credit,numberdos)
-			worksheet.write(x,8,line.analytic_account_id.name if line.analytic_account_id.name  else '',bord)
+			worksheet.write(x, 8, line.analytic_account_id.name or '', bord)
 			worksheet.write(x,9,line.amount_currency,bord)
-			worksheet.write(x,10,line.currency_id.name if line.currency_id.name  else '',bord)
-			worksheet.write(x,11,line.tax_code_id.name if line.tax_code_id.name  else '',bord)
+			worksheet.write(x, 10, line.currency_id.name or '', bord)
+			worksheet.write(x, 11, line.tax_code_id.name or '', bord)
 			worksheet.write(x,12,line.tax_amount,numberdos)
 			worksheet.write(x,13,line.tc,numbertres)
-			worksheet.write(x,14,line.type_document_it.code if line.type_document_it.code  else '',bord)
+			worksheet.write(x, 14, line.type_document_it.code or '', bord)
 			worksheet.write(x,15,str(line.full_reconcile_id.name) if line.full_reconcile_id.id  else '',bord)
 
 
@@ -249,9 +249,9 @@ class account_move(models.Model):
 
 
 		workbook.close()
-		
-		f = open( direccion + 'tempo_account_move_line.xlsx', 'rb')
-		
+
+		f = open(f'{direccion}tempo_account_move_line.xlsx', 'rb')
+
 		vals = {
 			'output_name': 'AsientoContable.xlsx',
 			'output_file': base64.encodestring(''.join(f.readlines())),		
@@ -313,36 +313,36 @@ class account_move_wizard_add_linea(models.TransientModel):
 	def onchange_suplier_invoice_number_it(self):
 		if self.comprobante_manual:
 			self.comprobante_manual = str(self.comprobante_manual).replace(' ','')
-			
-			if self.comprobante_manual and self.type_doc_id.id:
-				self.comprobante_manual = str(self.comprobante_manual).replace(' ','')
-				t = self.comprobante_manual.split('-')
-				n_serie = 0
-				n_documento = 0
-				self.env.cr.execute("select coalesce(n_serie,0), coalesce(n_documento,0) from einvoice_catalog_01 where id = "+ str(self.type_doc_id.id))
-				
-				forelemn = self.env.cr.fetchall()
-				for ielem in forelemn:
-					n_serie = ielem[0]
-					n_documento = ielem[1]
-				if len(t) == 2:
-					parte1= t[0]
-					if len(t[0]) < n_serie:
-						for i in range(0,n_serie-len(t[0])):
-							parte1 = '0'+parte1
-					parte2= t[1]
-					if len(t[1]) < n_documento:
-						for i in range(0,n_documento-len(t[1])):
-							parte2 = '0'+parte2
-					self.comprobante_manual = parte1 + '-' + parte2
-				elif len(t) == 1:
-					parte2= t[0]
-					if len(t[0]) < n_documento:
-						for i in range(0,n_documento-len(t[0])):
-							parte2 = '0'+parte2
-					self.comprobante_manual = parte2
-				else:
-					pass
+
+		if self.comprobante_manual and self.type_doc_id.id:
+			self.comprobante_manual = str(self.comprobante_manual).replace(' ','')
+			t = self.comprobante_manual.split('-')
+			n_serie = 0
+			n_documento = 0
+			self.env.cr.execute(
+				f"select coalesce(n_serie,0), coalesce(n_documento,0) from einvoice_catalog_01 where id = {str(self.type_doc_id.id)}"
+			)
+
+			forelemn = self.env.cr.fetchall()
+			for ielem in forelemn:
+				n_serie = ielem[0]
+				n_documento = ielem[1]
+			if len(t) == 2:
+				parte1= t[0]
+				if len(parte1) < n_serie:
+					for _ in range(n_serie - len(parte1)):
+						parte1 = f'0{parte1}'
+				parte2= t[1]
+				if len(parte2) < n_documento:
+					for _ in range(n_documento - len(parte2)):
+						parte2 = f'0{parte2}'
+				self.comprobante_manual = f'{parte1}-{parte2}'
+			elif len(t) == 1:
+				parte2= t[0]
+				if len(parte2) < n_documento:
+					for _ in range(n_documento - len(parte2)):
+						parte2 = f'0{parte2}'
+				self.comprobante_manual = parte2
 
 	@api.onchange('debit')
 	def onchange_debit(self):
@@ -377,27 +377,29 @@ class account_move_wizard_add_linea(models.TransientModel):
 
 			comprobante = self.comprobante_manual if self.is_pago == False else self.comprobante_auto.name
 			data = {
-				'name':self.glosa,
+				'name': self.glosa,
 				'partner_id': self.empresa.id,
-				'nro_comprobante': comprobante if comprobante else '',
-				'account_id':self.account_id.id,
+				'nro_comprobante': comprobante or '',
+				'account_id': self.account_id.id,
 				'date_maturity': self.date_vencimiento,
 				'debit': self.debit,
-				'credit':self.credit,
+				'credit': self.credit,
 				'analytic_account_id': self.analytic_id.id,
 				'amount_currency': self.import_divisa,
 				'currency_id': self.currency_id.id,
-				'tax_code_id':self.impuesto.id,
-				'tax_amount':self.importe_impuesto,
-				'tc':self.type_change,
-				'type_document_it':self.type_doc_id.id,
-				'rendicion_id':self.rendicion_id.id,
+				'tax_code_id': self.impuesto.id,
+				'tax_amount': self.importe_impuesto,
+				'tc': self.type_change,
+				'type_document_it': self.type_doc_id.id,
+				'rendicion_id': self.rendicion_id.id,
 				'product_id': self.product_id.id,
-				'product_uom_id':self.uom_id.id,
-				'quantity':self.cantidad,
+				'product_uom_id': self.uom_id.id,
+				'quantity': self.cantidad,
 				'location_id': self.stock_id.id,
 				'tiene_detalle': self.tiene_detalle,
-				'analytic_tag_ids': [(6,0,[self.etiqueta_analitica.id])] if self.etiqueta_analitica.id else [(6,0,[])],
+				'analytic_tag_ids': [(6, 0, [self.etiqueta_analitica.id])]
+				if self.etiqueta_analitica.id
+				else [(6, 0, [])],
 			}
 			obj_linea = self.env['account.move.line'].search([('id','=',tt)])[0].write(data)
 			return True
@@ -412,27 +414,27 @@ class account_move_wizard_add_linea(models.TransientModel):
 
 		comprobante = self.comprobante_manual if self.is_pago == False else self.comprobante_auto.name
 		data = {
-			'name':self.glosa,
+			'name': self.glosa,
 			'partner_id': self.empresa.id,
-			'nro_comprobante': comprobante if comprobante else '',
-			'account_id':self.account_id.id,
+			'nro_comprobante': comprobante or '',
+			'account_id': self.account_id.id,
 			'date_maturity': self.date_vencimiento,
 			'debit': self.debit,
-			'credit':self.credit,
+			'credit': self.credit,
 			'analytic_account_id': self.analytic_id.id,
 			'amount_currency': self.import_divisa,
 			'currency_id': self.currency_id.id,
-			'tax_code_id':self.impuesto.id,
-			'tax_amount':self.importe_impuesto,
-			'tc':self.type_change,
-			'type_document_it':self.type_doc_id.id,
-			'rendicion_id':self.rendicion_id.id,
-			'move_id':m.id,
+			'tax_code_id': self.impuesto.id,
+			'tax_amount': self.importe_impuesto,
+			'tc': self.type_change,
+			'type_document_it': self.type_doc_id.id,
+			'rendicion_id': self.rendicion_id.id,
+			'move_id': m.id,
 			'product_id': self.product_id.id,
-			'product_uom_id':self.uom_id.id,
-			'quantity':self.cantidad,
+			'product_uom_id': self.uom_id.id,
+			'quantity': self.cantidad,
 			'location_id': self.stock_id.id,
-			'tiene_detalle': self.tiene_detalle,		
+			'tiene_detalle': self.tiene_detalle,
 		}
 		j = self.env['account.move.line'].create(data)
 		if self.etiqueta_analitica.id:
@@ -465,7 +467,7 @@ class account_move_pdf(osv.TransientModel):
 			obj_move = self.env['account.move'].search([('id','=',self.env.context['active_ids'][0])])[0]
 
 			self.reporteador(obj_move)
-			
+
 			import sys
 			reload(sys)
 			sys.setdefaultencoding('iso-8859-1')
@@ -476,7 +478,9 @@ class account_move_pdf(osv.TransientModel):
 			direccion = self.env['main.parameter'].search([])[0].dir_create_file
 			vals = {
 				'output_name': 'AsientoContable.pdf',
-				'output_file': open(direccion + "AsientoContable.pdf", "rb").read().encode("base64"),	
+				'output_file': open(f"{direccion}AsientoContable.pdf", "rb")
+				.read()
+				.encode("base64"),
 			}
 			sfs_id = self.env['export.file.save'].create(vals)
 			return {
@@ -494,7 +498,11 @@ class account_move_pdf(osv.TransientModel):
 		c.setFont("Calibri-Bold", 10)
 		c.setFillColor(black)
 		c.drawCentredString((wReal/2)+20,hReal, self.env["res.company"].search([])[0].name.upper())
-		c.drawCentredString((wReal/2)+20,hReal-12, "ASIENTO CONTABLE: "+ obj_move.name + " - " + obj_move.journal_id.name )
+		c.drawCentredString(
+			(wReal / 2) + 20,
+			hReal - 12,
+			f"ASIENTO CONTABLE: {obj_move.name} - {obj_move.journal_id.name}",
+		)
 
 		c.setFont("Calibri-Bold", 8)
 
@@ -504,9 +512,9 @@ class account_move_pdf(osv.TransientModel):
 
 
 		c.setFont("Calibri", 8)
-		c.drawString( 10+90,hReal-48, obj_move.partner_id.name if obj_move.partner_id.name else '')
-		c.drawString( 400+60,hReal-36, obj_move.ref if obj_move.ref else '')
-		c.drawString( 400+60,hReal-48, obj_move.date if obj_move.date else '')
+		c.drawString(10+90, hReal-48, obj_move.partner_id.name or '')
+		c.drawString(400+60, hReal-36, obj_move.ref or '')
+		c.drawString(400+60, hReal-48, obj_move.date or '')
 
 
 		style = getSampleStyleSheet()["Normal"]
@@ -581,38 +589,20 @@ class account_move_pdf(osv.TransientModel):
 		if titulo == 1:
 			data= [[ paragraph1 , paragraph2 , paragraph3 , paragraph4, paragraph5 , paragraph6 , paragraph7 ,paragraph12]]
 			t=Table(data,colWidths=( 80,120, 80, 90, 50,60,60,25), rowHeights=(9))
-			t.setStyle(TableStyle([
-				('GRID',(0,0),(-1,-1), 1, colors.black),
-				('ALIGN',(0,0),(-1,-1),'LEFT'),
-				('VALIGN',(0,0),(-1,-1),'MIDDLE'),
-				('TEXTFONT', (0, 0), (-1, -1), 'Calibri-Bold'),
-				('FONTSIZE',(0,0),(-1,-1),4),
-				('BACKGROUND', (0, 0), (-1, -1), colors.gray)
-			]))
 		elif titulo == 2:
 			data= [[ paragraph8 ,paragraph9,paragraph10,paragraph11]]
 			t=Table(data,colWidths=(100,100,50,60), rowHeights=(9))
-			t.setStyle(TableStyle([
-				('GRID',(0,0),(-1,-1), 1, colors.black),
-				('ALIGN',(0,0),(-1,-1),'LEFT'),
-				('VALIGN',(0,0),(-1,-1),'MIDDLE'),
-				('TEXTFONT', (0, 0), (-1, -1), 'Calibri-Bold'),
-				('FONTSIZE',(0,0),(-1,-1),4),
-				('BACKGROUND', (0, 0), (-1, -1), colors.gray)
-			]))
 		else:
 			data= [[ paragraph13 ,paragraph14,paragraph15,paragraph16]]
 			t=Table(data,colWidths=(70,130,60,60), rowHeights=(9))
-			t.setStyle(TableStyle([
-				('GRID',(0,0),(-1,-1), 1, colors.black),
-				('ALIGN',(0,0),(-1,-1),'LEFT'),
-				('VALIGN',(0,0),(-1,-1),'MIDDLE'),
-				('TEXTFONT', (0, 0), (-1, -1), 'Calibri-Bold'),
-				('FONTSIZE',(0,0),(-1,-1),4),
-				('BACKGROUND', (0, 0), (-1, -1), colors.gray)
-			]))
-
-
+		t.setStyle(TableStyle([
+			('GRID',(0,0),(-1,-1), 1, colors.black),
+			('ALIGN',(0,0),(-1,-1),'LEFT'),
+			('VALIGN',(0,0),(-1,-1),'MIDDLE'),
+			('TEXTFONT', (0, 0), (-1, -1), 'Calibri-Bold'),
+			('FONTSIZE',(0,0),(-1,-1),4),
+			('BACKGROUND', (0, 0), (-1, -1), colors.gray)
+		]))
 		t.wrapOn(c,20,500)
 		t.drawOn(c,20,hReal-85)
 
@@ -636,7 +626,7 @@ class account_move_pdf(osv.TransientModel):
 		hReal = height - 40
 
 		direccion = self.env['main.parameter'].search([])[0].dir_create_file
-		c = canvas.Canvas( direccion + "AsientoContable.pdf", pagesize= A4 )
+		c = canvas.Canvas(f"{direccion}AsientoContable.pdf", pagesize= A4)
 		inicio = 0
 		pos_inicial = hReal-83
 		libro = None
@@ -646,22 +636,33 @@ class account_move_pdf(osv.TransientModel):
 		haberTotal = 0
 		pagina = 1
 		textPos = 0
-		
+
 		self.cabezera(c,wReal,hReal,obj_move,1)
 
 
-		posicion_indice = 1
-
-		for i in obj_move.line_ids:
+		for posicion_indice, i in enumerate(obj_move.line_ids, start=1):
 			c.setFont("Calibri", 8)
 			pagina, pos_inicial = self.verify_linea(c,wReal,hReal,pos_inicial,12,pagina,1,obj_move)
-			
+
 			c.drawString( 10 ,pos_inicial, str(posicion_indice) )
 			c.drawString( 22 ,pos_inicial, self.particionar_text( i.name,70) )
 			c.drawString( 102 ,pos_inicial, self.particionar_text( i.partner_id.name if i.partner_id.id else '',100) )
-			c.drawString( 222 ,pos_inicial,self.particionar_text( i.nro_comprobante if i.nro_comprobante else '',70) )
-			c.drawString( 302 ,pos_inicial,self.particionar_text( (i.account_id.code + ' - ' + i.account_id.name) if i.account_id.id else '',75) )
-			c.drawString( 392 ,pos_inicial,self.particionar_text( i.date_maturity if i.date_maturity else '',40) )
+			c.drawString(
+				222, pos_inicial, self.particionar_text(i.nro_comprobante or '', 70)
+			)
+			c.drawString(
+				302,
+				pos_inicial,
+				self.particionar_text(
+					f'{i.account_id.code} - {i.account_id.name}'
+					if i.account_id.id
+					else '',
+					75,
+				),
+			)
+			c.drawString(
+				392, pos_inicial, self.particionar_text(i.date_maturity or '', 40)
+			)
 			c.drawRightString( 498 ,pos_inicial, '{:,.2f}'.format(decimal.Decimal ("%0.2f" % i.debit)))
 			c.drawRightString( 558 ,pos_inicial, '{:,.2f}'.format(decimal.Decimal ("%0.2f" % i.credit)))
 			c.drawString( 562 ,pos_inicial,self.particionar_text( i.type_document_it.code if i.type_document_it.id else '',20) )
@@ -675,14 +676,6 @@ class account_move_pdf(osv.TransientModel):
 				c.line( acum_tx, pos_inicial-2, acum_tx ,pos_inicial+12)
 				acum_tx += i
 			c.line( acum_tx, pos_inicial-2, acum_tx ,pos_inicial+12)
-
-			posicion_indice += 1
-
-
-
-		posicion_indice= 1
-
-
 
 		pagina, pos_inicial = self.verify_linea(c,wReal,hReal,pos_inicial,36,pagina,2,obj_move)
 
@@ -755,16 +748,16 @@ class account_move_pdf(osv.TransientModel):
 		t.drawOn(c,20,pos_inicial)
 
 
-		for i in obj_move.line_ids:
+		for posicion_indice, i in enumerate(obj_move.line_ids, start=1):
 			c.setFont("Calibri", 8)
 			pagina, pos_inicial = self.verify_linea(c,wReal,hReal,pos_inicial,12,pagina,2,obj_move)
-			
+
 			c.drawString( 10 ,pos_inicial, str(posicion_indice) )
 			c.drawString( 22 ,pos_inicial,self.particionar_text( i.analytic_account_id.name if i.analytic_account_id.id else '', 43) )
 			c.drawRightString( 218 ,pos_inicial, '{:,.2f}'.format(decimal.Decimal ("%0.2f" % i.amount_currency)))
 			c.drawString( 222 ,pos_inicial,self.particionar_text( i.currency_id.name if i.currency_id.id else '',24) )
 			c.drawRightString( 328 ,pos_inicial, "%0.3f" % i.tc)
-			
+
 			c.line( 20, pos_inicial-2, 330 ,pos_inicial-2)
 
 
@@ -776,8 +769,6 @@ class account_move_pdf(osv.TransientModel):
 				acum_tx += i
 			c.line( acum_tx, pos_inicial-2, acum_tx ,pos_inicial+12)
 
-			posicion_indice += 1
-		
 		pagina, pos_inicial = self.verify_linea(c,wReal,hReal,pos_inicial,24,pagina,2,obj_move)
 
 
@@ -813,12 +804,11 @@ class account_move_pdf(osv.TransientModel):
 
 	@api.multi
 	def verify_linea(self,c,wReal,hReal,posactual,valor,pagina,titulo,obj_move):
-		if posactual <40:
-			c.showPage()
-			self.cabezera(c,wReal,hReal,obj_move,titulo)
-
-			c.setFont("Calibri-Bold", 8)
-			#c.drawCentredString(300,25,'Pág. ' + str(pagina+1))
-			return pagina+1,hReal-83
-		else:
+		if posactual >= 40:
 			return pagina,posactual-valor
+		c.showPage()
+		self.cabezera(c,wReal,hReal,obj_move,titulo)
+
+		c.setFont("Calibri-Bold", 8)
+		#c.drawCentredString(300,25,'Pág. ' + str(pagina+1))
+		return pagina+1,hReal-83

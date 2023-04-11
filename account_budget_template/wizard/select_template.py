@@ -39,49 +39,49 @@ class BudgetTemplateWizard(models.TransientModel):
     def create_budget(self):
 
         budget_lines = {}
-        budget_values = {}
         wizard = self.browse(self.ids)[0]
-
-        budget_obj= self.env["crossovered.budget"]
-        budget_lines_obj = self.env["crossovered.budget.lines"]
 
         if not self.template_id or not self.date_start or not self.date_end:
             raise UserError(_('Error, fill mandatory fields first !'))
 
-        else:
-            budget_values["template"] = self.template_id.id
-            budget_values["name"] = self.template_id.name
-            budget_values["date_from"] = self.date_start
-            budget_values["date_to"] = self.date_end
-            budget_values["company_id"] = self.company_id.id
-            budget_values["state"] = 'draft'
+        budget_values = {
+            "template": self.template_id.id,
+            "name": self.template_id.name,
+            "date_from": self.date_start,
+            "date_to": self.date_end,
+            "company_id": self.company_id.id,
+            "state": 'draft',
+        }
+        budget_obj= self.env["crossovered.budget"]
+        # create budget from sselected template
+        rec = budget_obj.create(budget_values)
 
-            # create budget from sselected template
-            rec = budget_obj.create(budget_values)
+        budget_lines_obj = self.env["crossovered.budget.lines"]
 
             # create budget lines
-            for line in self.template_id.template_lines_ids :
-                budget_lines = {}
-                budget_lines["crossovered_budget_id"] = rec.id
-                budget_lines["general_budget_id"] = line.budget_position.id
-                budget_lines["analytic_account_id"] = line.analytic_account_id.id
-                budget_lines["planned_amount"] = line.amount
-                budget_lines["date_from"] = rec.date_from
-                budget_lines["date_to"] = rec.date_to
-                rec_line = budget_lines_obj.create(budget_lines)
-
-
-            # display created budget
-            domain = [('id', 'in', [rec.id])]
-            return {
-                'domain': domain,
-                'name': 'Budget',
-                'view_type': 'form',
-                'view_mode': 'tree,form',
-                'view_id': False,
-                'res_model': 'crossovered.budget',
-                'type': 'ir.actions.act_window'
+        for line in self.template_id.template_lines_ids:
+            budget_lines = {
+                "crossovered_budget_id": rec.id,
+                "general_budget_id": line.budget_position.id,
+                "analytic_account_id": line.analytic_account_id.id,
+                "planned_amount": line.amount,
+                "date_from": rec.date_from,
+                "date_to": rec.date_to,
             }
+            rec_line = budget_lines_obj.create(budget_lines)
+
+
+        # display created budget
+        domain = [('id', 'in', [rec.id])]
+        return {
+            'domain': domain,
+            'name': 'Budget',
+            'view_type': 'form',
+            'view_mode': 'tree,form',
+            'view_id': False,
+            'res_model': 'crossovered.budget',
+            'type': 'ir.actions.act_window'
+        }
 
 
 
