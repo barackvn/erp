@@ -336,7 +336,7 @@ class ReportJournalQweb(models.TransientModel):
         """
         self.env.cr.execute(sql_distinct_tax_id, (self.id,))
         rows = self.env.cr.fetchall()
-        tax_ids = set([row[0] for row in rows])
+        tax_ids = {row[0] for row in rows}
 
         sql = """
             INSERT INTO report_journal_qweb_report_tax_line (
@@ -509,8 +509,7 @@ class ReportJournalQweb(models.TransientModel):
                 rjqj.id = %s
         """
 
-        for report_journal_id in tax_ids_by_journal_id:
-            tax_ids = tax_ids_by_journal_id[report_journal_id]
+        for report_journal_id, tax_ids in tax_ids_by_journal_id.items():
             for tax_id in tax_ids:
                 params = (
                     self.env.uid,

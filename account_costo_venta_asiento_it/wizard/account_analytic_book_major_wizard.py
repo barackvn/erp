@@ -20,9 +20,7 @@ class view_costo_venta_wizard(osv.TransientModel):
 	def ver_informe(self):
 		param = self.env['main.parameter'].search([])[0]
 		ubicacion = [0,0,0,0,0,0]
-		for i in param.location_clientes:
-			ubicacion.append(i.id)
-
+		ubicacion.extend(i.id for i in param.location_clientes)
 		self.env.cr.execute("""
 			drop table if exists tmp_costo_venta cascade;
 			create table tmp_costo_venta as
@@ -81,10 +79,7 @@ group by almacen_id,product_id, cuenta_salida, cuenta_valuacion
 
 		param = self.env['main.parameter'].search([])[0]
 		ubicacion = [0,0,0,0,0,0]
-		for i in param.location_clientes:
-			ubicacion.append(i.id)
-
-
+		ubicacion.extend(i.id for i in param.location_clientes)
 		self.env.cr.execute("""
 			drop table if exists tmp_costo_venta cascade;
 			create table tmp_costo_venta as
@@ -130,14 +125,14 @@ group by almacen_id,product_id, cuenta_salida, cuenta_valuacion
 )
 	""")
 
-		
+
 		param = self.env['main.parameter'].search([])[0]
 		cabezado = {
-			'journal_id':param.diario_destino.id,
-			'date':self.period_id.date_stop,
-			'ref':'COSTO VENTAS '+ self.period_id.code,
-			'fecha_contable':self.period_id.date_stop,
-			'ple_diariomayor':'1',
+			'journal_id': param.diario_destino.id,
+			'date': self.period_id.date_stop,
+			'ref': f'COSTO VENTAS {self.period_id.code}',
+			'fecha_contable': self.period_id.date_stop,
+			'ple_diariomayor': '1',
 		}
 		asiento = self.env['account.move'].create(cabezado)
 
@@ -154,11 +149,12 @@ group by almacen_id,product_id, cuenta_salida, cuenta_valuacion
 
 		for i in self.env.cr.fetchall():
 			linea = {
-				'name':'COSTO VENTAS '+self.period_id.code + ' ,almacen: ' + self.env['stock.location'].browse(i[0]).name,
-				'account_id':i[1],
-				'debit':abs( i[2]),
-				'credit':0,
-				'move_id':asiento.id,
+				'name': f'COSTO VENTAS {self.period_id.code} ,almacen: '
+				+ self.env['stock.location'].browse(i[0]).name,
+				'account_id': i[1],
+				'debit': abs(i[2]),
+				'credit': 0,
+				'move_id': asiento.id,
 			}
 			self.env['account.move.line'].create(linea)
 
@@ -171,11 +167,12 @@ group by almacen_id,product_id, cuenta_salida, cuenta_valuacion
 		for i in self.env.cr.fetchall():
 
 			linea = {
-				'name':'COSTO VENTAS '+self.period_id.code + ' ,almacen: ' + self.env['stock.location'].browse(i[0]).name,
-				'account_id':i[1],
-				'debit':0,
-				'credit':abs(i[2]),
-				'move_id':asiento.id,
+				'name': f'COSTO VENTAS {self.period_id.code} ,almacen: '
+				+ self.env['stock.location'].browse(i[0]).name,
+				'account_id': i[1],
+				'debit': 0,
+				'credit': abs(i[2]),
+				'move_id': asiento.id,
 			}
 			self.env['account.move.line'].create(linea)
 
@@ -196,16 +193,14 @@ group by almacen_id,product_id, cuenta_salida, cuenta_valuacion
 
 		param = self.env['main.parameter'].search([])[0]
 		ubicacion = [0,0,0,0,0,0]
-		for i in param.location_clientes:
-			ubicacion.append(i.id)
-		
+		ubicacion.extend(i.id for i in param.location_clientes)
 		param = self.env['main.parameter'].search([])[0]
 		cabezado = {
-			'journal_id':param.diario_destino.id,
-			'date':lineas[0].period_id.date_stop,
-			'ref':'COSTO VENTAS '+ lineas[0].period_id.code,
-			'fecha_contable':lineas[0].period_id.date_stop,
-			'ple_diariomayor':'1',
+			'journal_id': param.diario_destino.id,
+			'date': lineas[0].period_id.date_stop,
+			'ref': f'COSTO VENTAS {lineas[0].period_id.code}',
+			'fecha_contable': lineas[0].period_id.date_stop,
+			'ple_diariomayor': '1',
 		}
 		asiento = self.env['account.move'].create(cabezado)
 
@@ -216,15 +211,17 @@ group by almacen_id,product_id, cuenta_salida, cuenta_valuacion
 
 		for i in detalle:
 			if not i.cuenta_salida.id:
-				raise UserError('No esta definido la cuenta de salida para el producto: ' + i.producto.name + '.')
+				raise UserError(
+					f'No esta definido la cuenta de salida para el producto: {i.producto.name}.'
+				)
 			linea_obj = self.env['account.move.line'].search([('account_id','=',i.cuenta_salida.id),('move_id','=',asiento.id)])
 			if len(linea_obj)== 0:
 				linea = {
-					'name':'COSTO VENTAS '+lineas[0].period_id.code,
-					'account_id':i.cuenta_salida.id,
-					'debit':abs(i.costo_ventas),
-					'credit':0,
-					'move_id':asiento.id,
+					'name': f'COSTO VENTAS {lineas[0].period_id.code}',
+					'account_id': i.cuenta_salida.id,
+					'debit': abs(i.costo_ventas),
+					'credit': 0,
+					'move_id': asiento.id,
 				}
 				self.env['account.move.line'].create(linea)
 			else:
@@ -233,16 +230,18 @@ group by almacen_id,product_id, cuenta_salida, cuenta_valuacion
 
 
 			if not i.cuenta_valuacion.id:
-				raise UserError('No esta definido la cuenta de valuacion para el producto: ' + i.producto.name + '.')
+				raise UserError(
+					f'No esta definido la cuenta de valuacion para el producto: {i.producto.name}.'
+				)
 
-			linea_obj = self.env['account.move.line'].search([('account_id','=',i.cuenta_salida.id),('move_id','=',asiento.id)])			
+			linea_obj = self.env['account.move.line'].search([('account_id','=',i.cuenta_salida.id),('move_id','=',asiento.id)])
 			if len(linea_obj)== 0:
 				linea = {
-					'name':'COSTO VENTAS '+lineas[0].period_id.code,
-					'account_id':i.cuenta_valuacion.id,
-					'debit':0,
-					'credit':abs(i.costo_ventas),
-					'move_id':asiento.id,
+					'name': f'COSTO VENTAS {lineas[0].period_id.code}',
+					'account_id': i.cuenta_valuacion.id,
+					'debit': 0,
+					'credit': abs(i.costo_ventas),
+					'move_id': asiento.id,
 				}
 				self.env['account.move.line'].create(linea)
 			else:

@@ -139,11 +139,11 @@ order by a1.cuenta
 
 		param = self.env['main.parameter'].search([])[0]
 		cabezado = {
-			'journal_id':param.diario_destino.id,
-			'date':self.period_id.date_stop,
-			'ref':'COSTO VENTAS '+ self.period_id.code,
-			'fecha_contable':self.period_id.date_stop,
-			'ple_diariomayor':'1',
+			'journal_id': param.diario_destino.id,
+			'date': self.period_id.date_stop,
+			'ref': f'COSTO VENTAS {self.period_id.code}',
+			'fecha_contable': self.period_id.date_stop,
+			'ple_diariomayor': '1',
 		}
 		asiento = self.env['account.move'].create(cabezado)
 
@@ -163,18 +163,18 @@ order by a1.cuenta
 		for i in detalle:
 			cuenta_f = self.env['account.account'].search([('code','=',i[0])])
 			linea = {
-				'name':'ASIENTO DE DIFERENCIA DE CAMBIO '+self.period_id.code,
-				'account_id':cuenta_f.id,
-				'debit':i[1],
-				'credit':i[2],
-				'move_id':asiento.id,
+				'name': f'ASIENTO DE DIFERENCIA DE CAMBIO {self.period_id.code}',
+				'account_id': cuenta_f.id,
+				'debit': i[1],
+				'credit': i[2],
+				'move_id': asiento.id,
 			}
 
 			try:
 				self.env['account.move.line'].create(linea)
 			except:
 				raise UserError('No existe el TC para este periodo.')
-			
+
 
 		self.env.cr.execute("""
 
@@ -191,17 +191,17 @@ order by a1.cuenta
 		for i in detalle:
 			cuenta_f = self.env['account.account'].search([('code','=',i[0])])
 			linea = {
-				'name':'ASIENTO DE DIFERENCIA DE CAMBIO '+self.period_id.code,
-				'account_id':cuenta_f.id,
-				'debit':i[1],
-				'credit':i[2],
-				'move_id':asiento.id,
+				'name': f'ASIENTO DE DIFERENCIA DE CAMBIO {self.period_id.code}',
+				'account_id': cuenta_f.id,
+				'debit': i[1],
+				'credit': i[2],
+				'move_id': asiento.id,
 			}
 			try:
 				self.env['account.move.line'].create(linea)
 			except:
 				raise UserError('No existe el TC para este periodo.')
-			
+
 
 
 		return {
@@ -222,18 +222,16 @@ order by a1.cuenta
 
 		param = self.env['main.parameter'].search([])[0]
 		cabezado = {
-			'journal_id':param.diario_destino.id,
-			'date':lineas[0].period_id.date_stop,
-			'ref':'COSTO VENTAS '+ lineas[0].period_id.code,
-			'fecha_contable':lineas[0].period_id.date_stop,
-			'ple_diariomayor':'1',
+			'journal_id': param.diario_destino.id,
+			'date': lineas[0].period_id.date_stop,
+			'ref': f'COSTO VENTAS {lineas[0].period_id.code}',
+			'fecha_contable': lineas[0].period_id.date_stop,
+			'ple_diariomayor': '1',
 		}
 		asiento = self.env['account.move'].create(cabezado)
 
 		maslineas = [0,0,0,0]
-		for i in lineas:
-			maslineas.append(i.id)
-
+		maslineas.extend(i.id for i in lineas)
 		self.env.cr.execute("""
 
 				select cuenta, ABS(SUM(CASE WHEN a1.resultado like '77%' then ROUND(diferencia,2) else 0 end)) as debit, ABS(SUM(CASE WHEN a1.resultado like '67%' then ROUND(diferencia,2) else 0 end)) as credit from
@@ -250,11 +248,11 @@ order by a1.cuenta
 		for i in detalle:
 			cuenta_f = self.env['account.account'].search([('code','=',i[0])])
 			linea = {
-				'name':'ASIENTO DE DIFERENCIA DE CAMBIO '+lineas[0].period_id.code,
-				'account_id':cuenta_f.id,
-				'debit':i[1],
-				'credit':i[2],
-				'move_id':asiento.id,
+				'name': f'ASIENTO DE DIFERENCIA DE CAMBIO {lineas[0].period_id.code}',
+				'account_id': cuenta_f.id,
+				'debit': i[1],
+				'credit': i[2],
+				'move_id': asiento.id,
 			}
 			try:
 				self.env['account.move.line'].create(linea)
@@ -275,11 +273,11 @@ order by a1.cuenta
 		for i in detalle:
 			cuenta_f = self.env['account.account'].search([('code','=',i[0])])
 			linea = {
-				'name':'ASIENTO DE DIFERENCIA DE CAMBIO '+lineas[0].period_id.code,
-				'account_id':cuenta_f.id,
-				'debit':i[1],
-				'credit':i[2],
-				'move_id':asiento.id,
+				'name': f'ASIENTO DE DIFERENCIA DE CAMBIO {lineas[0].period_id.code}',
+				'account_id': cuenta_f.id,
+				'debit': i[1],
+				'credit': i[2],
+				'move_id': asiento.id,
 			}
 			try:
 				self.env['account.move.line'].create(linea)

@@ -13,12 +13,38 @@ class account_invoice(models.Model):
 		for invoice in self:
 			#refuse to validate a vendor bill/refund if there already exists one with the same reference for the same partner,
 			#because it's probably a double encoding of the same bill/refund
-			if invoice.type in ('in_invoice', 'in_refund') and invoice.reference:
-				if self.search([('type','=',invoice.type),('it_type_document','=',invoice.it_type_document.id),('type', '=', invoice.type), ('reference', '=', invoice.reference),('state','not in',('draft','cancel')),('company_id', '=', invoice.company_id.id), ('partner_id', '=', invoice.partner_id.id), ('id', '!=', invoice.id)]):
-					raise UserError(_("Duplicated vendor reference detected. You probably encoded twice the same vendor bill/refund."))
-			if invoice.type in ('out_invoice', 'out_refund') and invoice.reference:
-				if self.search([('type','=',invoice.type),('it_type_document','=',invoice.it_type_document.id), ('reference', '=', invoice.reference),('state','not in',('draft','cancel')),('company_id', '=', invoice.company_id.id), ('id', '!=', invoice.id)]):
-					raise UserError(_("Detectada una referencia duplicada. Probablemente haya codificado dos veces la misma factura/rectificativa."))
+			if (
+				invoice.type in ('in_invoice', 'in_refund')
+				and invoice.reference
+				and self.search(
+					[
+						('type', '=', invoice.type),
+						('it_type_document', '=', invoice.it_type_document.id),
+						('type', '=', invoice.type),
+						('reference', '=', invoice.reference),
+						('state', 'not in', ('draft', 'cancel')),
+						('company_id', '=', invoice.company_id.id),
+						('partner_id', '=', invoice.partner_id.id),
+						('id', '!=', invoice.id),
+					]
+				)
+			):
+				raise UserError(_("Duplicated vendor reference detected. You probably encoded twice the same vendor bill/refund."))
+			if (
+				invoice.type in ('out_invoice', 'out_refund')
+				and invoice.reference
+				and self.search(
+					[
+						('type', '=', invoice.type),
+						('it_type_document', '=', invoice.it_type_document.id),
+						('reference', '=', invoice.reference),
+						('state', 'not in', ('draft', 'cancel')),
+						('company_id', '=', invoice.company_id.id),
+						('id', '!=', invoice.id),
+					]
+				)
+			):
+				raise UserError(_("Detectada una referencia duplicada. Probablemente haya codificado dos veces la misma factura/rectificativa."))
 
 
 	@api.one
@@ -27,12 +53,12 @@ class account_invoice(models.Model):
 
 	@api.one
 	def write(self,vals):
-		if self.type == 'in_invoice' or self.type == 'in_refund':
-			if self.fecha_perception:
-				pass
-			else:
-				if self.date_invoice:
-					vals['fecha_perception'] = self.date_invoice
+		if (
+			self.type in ['in_invoice', 'in_refund']
+			and not self.fecha_perception
+			and self.date_invoice
+		):
+			vals['fecha_perception'] = self.date_invoice
 		t = super(account_invoice,self).write(vals)
 		self.validacion_dimension()
 		return t
@@ -47,14 +73,13 @@ class account_invoice(models.Model):
 	@api.one
 	def action_number(self):
 		t = super(account_invoice,self).action_number()
-		
-		if self.type == 'in_invoice' or self.type == 'in_refund':
-			
-			if self.fecha_perception:
-				pass
-			else:
-				if self.date_invoice:
-					self.fecha_perception = self.date_invoice
+
+		if (
+			self.type in ['in_invoice', 'in_refund']
+			and not self.fecha_perception
+			and self.date_invoice
+		):
+			self.fecha_perception = self.date_invoice
 		return t
 
 
@@ -77,19 +102,18 @@ class account_invoice(models.Model):
 		for i in self:
 			moneda = i.account_id.currency_id.name if i.account_id.currency_id.id else 'PEN'
 
-			if moneda == i.currency_id.name:
-				pass 
-			else:
+			if moneda != i.currency_id.name:
 				raise UserError("La moneda de la factura no coincide con la moneda de la cuenta.")
 
-			if i.serie_id.id and i.serie_id_internal.id and i.serie_id.id == i.serie_id_internal.id:
-				i.number = i.nro_internal
-				i.reference = i.nro_internal
-			elif i.serie_id.id and i.serie_id_internal.id != i.serie_id.id:
-				i.serie_id_internal = i.serie_id.id
-				i.nro_internal = i.serie_id.sequence_id.next_by_id()
-				i.number = i.nro_internal
-				i.reference =i.nro_internal
+			if i.serie_id.id:
+				if i.serie_id_internal.id and i.serie_id.id == i.serie_id_internal.id:
+					i.number = i.nro_internal
+					i.reference = i.nro_internal
+				elif i.serie_id_internal.id != i.serie_id.id:
+					i.serie_id_internal = i.serie_id.id
+					i.nro_internal = i.serie_id.sequence_id.next_by_id()
+					i.number = i.nro_internal
+					i.reference =i.nro_internal
 
 			i.onchange_suplier_invoice_number_it()
 			if  i.serie_id.id or i.reference:
@@ -123,24 +147,27 @@ class account_invoice(models.Model):
 
 	@api.one
 	def validacion_dimension(self):
-		if self.reference:
-			n_serie = 0
-			n_documento = 0
-			self.env.cr.execute("select coalesce(n_serie,0), coalesce(n_documento,0) from einvoice_catalog_01 where id = "+ str(self.it_type_document.id))
-			
-			forelemn = self.env.cr.fetchall()
-			for ielem in forelemn:
-				n_serie = ielem[0]
-				n_documento = ielem[1]
+		if not self.reference:
+			return
+		n_serie = 0
+		n_documento = 0
+		self.env.cr.execute(
+			f"select coalesce(n_serie,0), coalesce(n_documento,0) from einvoice_catalog_01 where id = {str(self.it_type_document.id)}"
+		)
 
-			t = self.reference.split('-')
+		forelemn = self.env.cr.fetchall()
+		for ielem in forelemn:
+			n_serie = ielem[0]
+			n_documento = ielem[1]
 
-			if len(t) == 2:				
-				if n_serie + n_documento >0 and n_serie + n_documento + 1 != len( self.reference ) :
-					raise ValidationError('El nro de dígitos es incorrecto en el Nro. Comprobante.')
-			elif len(t) == 1:
-				if n_documento >0 and n_documento != len( self.reference ) :
-					raise ValidationError('El nro de dígitos es incorrecto en el Nro. Comprobante.')
+		t = self.reference.split('-')
+
+		if len(t) == 2:				
+			if n_serie + n_documento >0 and n_serie + n_documento + 1 != len( self.reference ) :
+				raise ValidationError('El nro de dígitos es incorrecto en el Nro. Comprobante.')
+		elif len(t) == 1:
+			if n_documento >0 and n_documento != len( self.reference ) :
+				raise ValidationError('El nro de dígitos es incorrecto en el Nro. Comprobante.')
 
 		
 
@@ -149,43 +176,44 @@ class account_invoice(models.Model):
 	def onchange_suplier_invoice_number_it(self):
 		if self.reference:
 			self.reference = str(self.reference).replace(' ','')
-			
-			if self.reference and self.it_type_document.id:
-				self.reference = str(self.reference).replace(' ','')
-				t = self.reference.split('-')
-				n_serie = 0
-				n_documento = 0
-				self.env.cr.execute("select coalesce(n_serie,0), coalesce(n_documento,0) from einvoice_catalog_01 where id = "+ str(self.it_type_document.id))
-				
-				forelemn = self.env.cr.fetchall()
-				for ielem in forelemn:
-					n_serie = ielem[0]
-					n_documento = ielem[1]
-				if len(t) == 2:
-					parte1= t[0]
-					if len(t[0]) < n_serie:
-						for i in range(0,n_serie-len(t[0])):
-							parte1 = '0'+parte1
-					parte2= t[1]
-					if len(t[1]) < n_documento:
-						for i in range(0,n_documento-len(t[1])):
-							parte2 = '0'+parte2
-					self.reference = parte1 + '-' + parte2
-					
-					if n_serie + n_documento >0 and n_serie + n_documento + 1 != len( parte1 + '-' + parte2 ) :
-						raise ValidationError('El nro de dígitos es incorrecto en el Nro. Comprobante.')
-				elif len(t) == 1:
-					parte2= t[0]
-					if len(t[0]) < n_documento:
-						for i in range(0,n_documento-len(t[0])):
-							parte2 = '0'+parte2
-					self.reference = parte2
 
-					if n_documento >0 and n_documento != len( parte2 ) :
-						raise ValidationError('El nro de dígitos es incorrecto en el Nro. Comprobante.')
+		if self.reference and self.it_type_document.id:
+			self.reference = str(self.reference).replace(' ','')
+			t = self.reference.split('-')
+			n_serie = 0
+			n_documento = 0
+			self.env.cr.execute(
+				f"select coalesce(n_serie,0), coalesce(n_documento,0) from einvoice_catalog_01 where id = {str(self.it_type_document.id)}"
+			)
 
-				else:
-					pass
+			forelemn = self.env.cr.fetchall()
+			for ielem in forelemn:
+				n_serie = ielem[0]
+				n_documento = ielem[1]
+			if len(t) == 2:
+				parte1= t[0]
+				if len(parte1) < n_serie:
+					for _ in range(n_serie - len(parte1)):
+						parte1 = f'0{parte1}'
+				parte2= t[1]
+				if len(parte2) < n_documento:
+					for _ in range(n_documento - len(parte2)):
+						parte2 = f'0{parte2}'
+				self.reference = f'{parte1}-{parte2}'
+
+				if n_serie + n_documento > 0 and n_serie + n_documento + 1 != len(
+					f'{parte1}-{parte2}'
+				):
+					raise ValidationError('El nro de dígitos es incorrecto en el Nro. Comprobante.')
+			elif len(t) == 1:
+				parte2= t[0]
+				if len(parte2) < n_documento:
+					for _ in range(n_documento - len(parte2)):
+						parte2 = f'0{parte2}'
+				self.reference = parte2
+
+				if n_documento >0 and n_documento != len( parte2 ) :
+					raise ValidationError('El nro de dígitos es incorrecto en el Nro. Comprobante.')
 				
 				
 
@@ -203,8 +231,8 @@ class account_invoice(models.Model):
 				type_payment = _('Outstanding debits')
 			info = {'title': '', 'outstanding': True, 'content': [], 'invoice_id': self.id}
 			lines = self.env['account.move.line'].search(domain)
-			currency_id = self.currency_id
 			if len(lines) != 0:
+				currency_id = self.currency_id
 				for line in lines:
 					# get the outstanding residual value in invoice currency
 					if line.currency_id and line.currency_id == self.currency_id:

@@ -38,8 +38,7 @@ class create_detraccion(models.Model):
 		flag_ver = True
 		data = {
 			'journal_id': m.diario_detracciones.id,
-			'ref':(invoice.number if invoice.number else 'Borrador'),
-			#'period_id': invoice.period_id.id,
+			'ref': invoice.number or 'Borrador',
 			'date': self.fecha,
 		}
 		if invoice.name_move_detraccion and invoice.diario_move_detraccion.id == m.diario_detracciones.id and invoice.fecha_move_detraccion == invoice.date_invoice:
@@ -52,7 +51,6 @@ class create_detraccion(models.Model):
 		lines = []
 
 		if invoice.currency_id.name == 'USD':
-
 			line_cc = (0,0,{
 				'account_id': invoice.account_id.id,
 				'debit': self.monto * invoice.currency_rate_auto,
@@ -78,8 +76,6 @@ class create_detraccion(models.Model):
 				#'currency_rate_it': invoice.currency_rate_auto,
 				'type_document_it': invoice.it_type_document.id,
 				})
-			lines.append(line_cc)
-
 		else:
 			line_cc = (0,0,{
 				'account_id': invoice.account_id.id,
@@ -101,8 +97,7 @@ class create_detraccion(models.Model):
 				'nro_comprobante': invoice.reference,
 				'type_document_it': invoice.it_type_document.id,
 				})
-			lines.append(line_cc)
-
+		lines.append(line_cc)
 
 		data['line_ids'] = lines
 		tt = self.env['account.move'].create(data)
@@ -114,15 +109,12 @@ class create_detraccion(models.Model):
 			invoice.name_move_detraccion = tt.name
 
 		vals_data = {}
-		ids_conciliar = []
-		for i1 in tt.line_ids:
-			if i1.debit >0:
-				ids_conciliar.append(i1.id)
-
-		for i2 in invoice.move_id.line_ids:
-			if i2.account_id.id == invoice.account_id.id:
-				ids_conciliar.append(i2.id)
-
+		ids_conciliar = [i1.id for i1 in tt.line_ids if i1.debit >0]
+		ids_conciliar.extend(
+			i2.id
+			for i2 in invoice.move_id.line_ids
+			if i2.account_id.id == invoice.account_id.id
+		)
 		concile_move = self.with_context({'active_ids':ids_conciliar}).env['account.move.line.reconcile'].create(vals_data)
 		concile_move.trans_rec_reconcile_partial_reconcile()
 		return True
@@ -140,10 +132,7 @@ class account_invoice(models.Model):
 	@api.one
 	def get_estado_buttom_detraccion(self):
 		if self.state in ('open','paid'):
-			if self.move_detraccion_id.id:
-				self.ver_estado_buttom_detraccion= 1
-			else:
-				self.ver_estado_buttom_detraccion= 2
+			self.ver_estado_buttom_detraccion = 1 if self.move_detraccion_id.id else 2
 		else:
 			self.ver_estado_buttom_detraccion= 3
 
@@ -156,10 +145,9 @@ class account_invoice(models.Model):
 	def action_cancel(self):
 
 		vals_data = {}
-		ids_conciliar = []
-		for i1 in self.move_detraccion_id.line_ids:
-			if i1.debit >0:
-				ids_conciliar.append(i1.id)
+		ids_conciliar = [
+			i1.id for i1 in self.move_detraccion_id.line_ids if i1.debit > 0
+		]
 		"""
 		for i2 in self.move_id.line_id:
 			if i2.account_id.id == self.account_id.id:
@@ -180,10 +168,9 @@ class account_invoice(models.Model):
 	def remove_detraccion_gastos(self):
 
 		vals_data = {}
-		ids_conciliar = []
-		for i1 in self.move_detraccion_id.line_ids:
-			if i1.debit >0:
-				ids_conciliar.append(i1.id)
+		ids_conciliar = [
+			i1.id for i1 in self.move_detraccion_id.line_ids if i1.debit > 0
+		]
 		"""
 		for i2 in self.move_id.line_id:
 			if i2.account_id.id == self.account_id.id:

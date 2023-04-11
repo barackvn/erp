@@ -30,8 +30,7 @@ class create_detraccion_cliente(models.Model):
 		flag_ver = True
 		data = {
 			'journal_id': m.diario_detracciones.id,
-			'ref':(invoice.number if invoice.number else 'Borrador'),
-			#'period_id': invoice.period_id.id,
+			'ref': invoice.number or 'Borrador',
 			'date': self.fecha_cl,
 		}
 		if invoice.name_move_detraccion_cl and invoice.diario_move_detraccion_cl.id == m.diario_detracciones.id and invoice.fecha_move_detraccion_cl == invoice.date_invoice:
@@ -44,8 +43,6 @@ class create_detraccion_cliente(models.Model):
 		lines = []
 
 		if invoice.currency_id.name == 'USD':
-
-
 			line_cc = (0,0,{
 				'account_id': m.account_detracciones_cl.id ,
 				'debit': self.monto_cl * invoice.currency_rate_auto,
@@ -71,9 +68,7 @@ class create_detraccion_cliente(models.Model):
 				#'currency_rate_it': invoice.currency_rate_auto,
 				'currency_id': invoice.currency_id.id,				
 				})
-			lines.append(line_cc)
 		else:
-
 			line_cc = (0,0,{
 				'account_id': m.account_detracciones_cl.id ,
 				'debit': self.monto_cl,
@@ -94,8 +89,7 @@ class create_detraccion_cliente(models.Model):
 				'nro_comprobante': invoice.reference,
 				'type_document_it': invoice.it_type_document.id,
 				})
-			lines.append(line_cc)
-
+		lines.append(line_cc)
 		data['line_ids'] = lines
 		tt = self.env['account.move'].create(data)
 		if tt.state =='draft':
@@ -106,15 +100,12 @@ class create_detraccion_cliente(models.Model):
 			invoice.name_move_detraccion_cl = tt.name
 
 		vals_data = {}
-		ids_conciliar = []
-		for i1 in tt.line_ids:
-			if i1.credit >0:
-				ids_conciliar.append(i1.id)
-
-		for i2 in invoice.move_id.line_ids:
-			if i2.account_id.id == invoice.account_id.id:
-				ids_conciliar.append(i2.id)
-
+		ids_conciliar = [i1.id for i1 in tt.line_ids if i1.credit >0]
+		ids_conciliar.extend(
+			i2.id
+			for i2 in invoice.move_id.line_ids
+			if i2.account_id.id == invoice.account_id.id
+		)
 		concile_move = self.with_context({'active_ids':ids_conciliar}).env['account.move.line.reconcile'].create(vals_data)
 		concile_move.trans_rec_reconcile_partial_reconcile()
 		return True
@@ -151,10 +142,9 @@ class account_invoice(models.Model):
 		if self.ver_estado_buttom_detraccion_cl == 1:
 			raise osv.except_osv('Alerta!', u"La factura tiene una detracción generada.")
 		vals_data = {}
-		ids_conciliar = []
-		for i1 in self.move_detraccion_cl_id.line_ids:
-			if i1.debit >0:
-				ids_conciliar.append(i1.id)
+		ids_conciliar = [
+			i1.id for i1 in self.move_detraccion_cl_id.line_ids if i1.debit > 0
+		]
 		"""
 		for i2 in self.move_id.line_id:
 			if i2.account_id.id == self.account_id.id:
@@ -175,10 +165,9 @@ class account_invoice(models.Model):
 	def remove_detraccion_gastos_cl(self):
 
 		vals_data = {}
-		ids_conciliar = []
-		for i1 in self.move_detraccion_cl_id.line_ids:
-			if i1.debit >0:
-				ids_conciliar.append(i1.id)
+		ids_conciliar = [
+			i1.id for i1 in self.move_detraccion_cl_id.line_ids if i1.debit > 0
+		]
 		"""
 		for i2 in self.move_id.line_id:
 			if i2.account_id.id == self.account_id.id:
@@ -197,18 +186,16 @@ class account_invoice(models.Model):
 	@api.multi
 	def create_detraccion_gastos_cl(self):
 
-		if self.type == "out_invoice":
-			context = {'invoice_id': self.id,'default_fecha_cl': self.date_invoice,
-			'default_monto_cl':self.amount_total * float(self.partner_id.porcentaje)/100.0}
-			return {
-					'type': 'ir.actions.act_window',
-					'name': "Generar Detracción",
-					'view_type': 'form',
-					'view_mode': 'form',
-					'context': context,
-					'res_model': 'create.detraccion.cliente',
-					'target': 'new',
-			}
-
-		else:
+		if self.type != "out_invoice":
 			raise osv.except_osv('Alerta!', u"La factura no es de clientes.")
+		context = {'invoice_id': self.id,'default_fecha_cl': self.date_invoice,
+		'default_monto_cl':self.amount_total * float(self.partner_id.porcentaje)/100.0}
+		return {
+				'type': 'ir.actions.act_window',
+				'name': "Generar Detracción",
+				'view_type': 'form',
+				'view_mode': 'form',
+				'context': context,
+				'res_model': 'create.detraccion.cliente',
+				'target': 'new',
+		}

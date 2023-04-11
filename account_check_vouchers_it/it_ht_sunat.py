@@ -28,7 +28,9 @@ class account_payment(models.Model):
 		"""
 		aml_obj = self.env['account.move.line'].with_context(check_move_validity=False)
 		invoice_currency = False
-		if self.invoice_ids and all([x.currency_id == self.invoice_ids[0].currency_id for x in self.invoice_ids]):
+		if self.invoice_ids and all(
+			x.currency_id == self.invoice_ids[0].currency_id for x in self.invoice_ids
+		):
 			#if all the invoices selected share the same currency, record the paiement in that currency too
 			invoice_currency = self.invoice_ids[0].currency_id
 		debit, credit, amount_currency, currency_id = aml_obj.with_context(date=self.payment_date).compute_amount_fields(amount, self.currency_id, self.company_id.currency_id, invoice_currency)
@@ -71,7 +73,7 @@ class account_payment(models.Model):
 		self.invoice_ids.register_payment(counterpart_aml)
 
 		#Write counterpart lines
-		if not self.currency_id != self.company_id.currency_id:
+		if self.currency_id == self.company_id.currency_id:
 			amount_currency = 0
 		liquidity_aml_dict = self._get_shared_move_line_vals(credit, debit, -amount_currency, move.id, False)
 		liquidity_aml_dict.update(self._get_liquidity_move_line_vals(-amount))

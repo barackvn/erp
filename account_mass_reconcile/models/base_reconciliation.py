@@ -62,11 +62,11 @@ class MassReconcileBase(models.AbstractModel):
             'move_id',
             'nro_comprobante',
             'type_document_it')
-        return ["account_move_line.%s" % col for col in aml_cols]
+        return [f"account_move_line.{col}" for col in aml_cols]
 
     @api.multi
     def _select(self, *args, **kwargs):
-        return "SELECT %s" % ', '.join(self._base_columns())
+        return f"SELECT {', '.join(self._base_columns())}"
 
     @api.multi
     def _from(self, *args, **kwargs):
@@ -96,12 +96,12 @@ class MassReconcileBase(models.AbstractModel):
             params = [self.account_id.id]
 
         if self.partner_id.id:
-            where += " AND account_move_line.partner_id = "+ str(self.partner_id.id) + " "
+            where += f" AND account_move_line.partner_id = {str(self.partner_id.id)} "
 
         #elif self.partner_ids:
         #    where += " AND account_move_line.partner_id IN %s"
         #    params.append(tuple([l.id for l in self.partner_ids]))
-            
+
         return where, params
 
     @api.multi
@@ -113,7 +113,7 @@ class MassReconcileBase(models.AbstractModel):
             dummy, where, params = ml_obj._where_calc(
                 safe_eval(self.filter)).get_sql()
             if where:
-                where = " AND %s" % where
+                where = f" AND {where}"
         return where, params
 
     @api.multi
@@ -122,14 +122,16 @@ class MassReconcileBase(models.AbstractModel):
         precision = self.env['decimal.precision'].precision_get('Account')
         keys = ('debit', 'credit')
         sums = reduce(
-            lambda line, memo:
-            dict((key, value + memo[key])
-                 for key, value
-                 in line.iteritems()
-                 if key in keys), lines)
+            lambda line, memo: {
+                key: value + memo[key]
+                for key, value in line.iteritems()
+                if key in keys
+            },
+            lines,
+        )
         debit, credit = sums['debit'], sums['credit']
         writeoff_amount = round(debit - credit, precision)
-        return bool(writeoff_limit >= abs(writeoff_amount)), debit, credit
+        return writeoff_limit >= abs(writeoff_amount), debit, credit
 
     @api.multi
     def _get_rec_date(self, lines, based_on='end_period_last_credit'):

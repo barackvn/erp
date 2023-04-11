@@ -45,37 +45,35 @@ class account_perception(models.Model):
 		if self.comprobante:
 			self.comprobante = str(self.comprobante).replace(' ', '')
 
-			if self.comprobante and self.tipo_doc.id:
-				self.comprobante = str(self.comprobante).replace(' ', '')
-				t = self.comprobante.split('-')
-				n_serie = 0
-				n_documento = 0
-				self.env.cr.execute(
-					"select coalesce(n_serie,0), coalesce(n_documento,0) from einvoice_catalog_01 where id = " + str(
-						self.tipo_doc.id))
+		if self.comprobante and self.tipo_doc.id:
+			self.comprobante = str(self.comprobante).replace(' ', '')
+			t = self.comprobante.split('-')
+			n_serie = 0
+			n_documento = 0
+			self.env.cr.execute(
+				f"select coalesce(n_serie,0), coalesce(n_documento,0) from einvoice_catalog_01 where id = {str(self.tipo_doc.id)}"
+			)
 
-				forelemn = self.env.cr.fetchall()
-				for ielem in forelemn:
-					n_serie = ielem[0]
-					n_documento = ielem[1]
-				if len(t) == 2:
-					parte1 = t[0]
-					if len(t[0]) < n_serie:
-						for i in range(0, n_serie - len(t[0])):
-							parte1 = '0' + parte1
-					parte2 = t[1]
-					if len(t[1]) < n_documento:
-						for i in range(0, n_documento - len(t[1])):
-							parte2 = '0' + parte2
-					self.comprobante = parte1 + '-' + parte2
-				elif len(t) == 1:
-					parte2 = t[0]
-					if len(t[0]) < n_documento:
-						for i in range(0, n_documento - len(t[0])):
-							parte2 = '0' + parte2
-					self.comprobante = parte2
-				else:
-					pass
+			forelemn = self.env.cr.fetchall()
+			for ielem in forelemn:
+				n_serie = ielem[0]
+				n_documento = ielem[1]
+			if len(t) == 2:
+				parte1 = t[0]
+				if len(parte1) < n_serie:
+					for _ in range(n_serie - len(parte1)):
+						parte1 = f'0{parte1}'
+				parte2 = t[1]
+				if len(parte2) < n_documento:
+					for _ in range(n_documento - len(parte2)):
+						parte2 = f'0{parte2}'
+				self.comprobante = f'{parte1}-{parte2}'
+			elif len(t) == 1:
+				parte2 = t[0]
+				if len(parte2) < n_documento:
+					for _ in range(n_documento - len(parte2)):
+						parte2 = f'0{parte2}'
+				self.comprobante = parte2
 
 class account_invoice(models.Model):
 	_inherit = 'account.invoice'
@@ -90,14 +88,25 @@ class account_invoice(models.Model):
 
 	@api.model
 	def _prepare_refund2(self, invoice, date_invoice=None, date=None, description=None, journal_id=None,it_type_document=None,reference=None):
-		values = {}
-		for field in ['name', 'reference', 'comment', 'date_due', 'partner_id', 'company_id', 'team_id',
-					  'account_id', 'currency_id', 'payment_term_id', 'user_id', 'fiscal_position_id']:
-			if invoice._fields[field].type == 'many2one':
-				values[field] = invoice[field].id
-			else:
-				values[field] = invoice[field] or False
-
+		values = {
+			field: invoice[field].id
+			if invoice._fields[field].type == 'many2one'
+			else invoice[field] or False
+			for field in [
+				'name',
+				'reference',
+				'comment',
+				'date_due',
+				'partner_id',
+				'company_id',
+				'team_id',
+				'account_id',
+				'currency_id',
+				'payment_term_id',
+				'user_id',
+				'fiscal_position_id',
+			]
+		}
 		values['invoice_line_ids'] = self._refund_cleanup_lines(invoice.invoice_line_ids)
 
 		tax_lines = invoice.tax_line_ids
@@ -127,15 +136,15 @@ class account_invoice(models.Model):
 		if reference:
 			values['reference'] = reference
 
-		related_documents = []
-		val = {}
-		val['tipo_doc'] = self.it_type_document.id   #einvoice.catalog.01
-		val['comprobante'] = self.reference
-		val['fecha'] = self.date_invoice
-		val['igv'] = self.amount_tax
-		val['base_imponible'] = self.amount_untaxed
-		val['perception'] = self.amount_total
-		related_documents.append((0, 0, val))
+		val = {
+			'tipo_doc': self.it_type_document.id,
+			'comprobante': self.reference,
+			'fecha': self.date_invoice,
+			'igv': self.amount_tax,
+			'base_imponible': self.amount_untaxed,
+			'perception': self.amount_total,
+		}
+		related_documents = [(0, 0, val)]
 		values['account_ids'] = related_documents
 
 		return values
@@ -168,9 +177,11 @@ class account_invoice(models.Model):
 		asiento_id = self.account_id
 		linea_fact = False
 		for asiento in self.move_id.line_ids:
-			if asiento.account_id.user_type_id.type == 'receivable' or  asiento.account_id.user_type_id.type == 'payable':
+			if asiento.account_id.user_type_id.type in ['receivable', 'payable']:
 				#linea_fact = asiento
-				self.env.cr.execute('delete from account_move_line where id ='+ str(asiento.id))
+				self.env.cr.execute(
+					f'delete from account_move_line where id ={str(asiento.id)}'
+				)
 
 		company_id = self._context.get('company_id', self.env.user.company_id.id)
 
@@ -190,37 +201,185 @@ class account_invoice(models.Model):
 				insert ="""INSERT INTO account_move_line (journal_id,date_maturity, partner_id, company_id, debit,ref,
 	            account_id,debit_cash_basis,reconciled,balance_cash_basis,date,move_id,company_currency_id,name,invoice_id,balance,quantity,type_document_it,nro_comprobante,
 	            create_date,blocked,create_uid,credit_cash_basis,amount_residual_currency,write_date,write_uid,credit,amount_currency,sequence,amount_residual) """
-				values = """VALUES("""+str(self.journal_id.id)+""",
-				'"""+str(self.date_due)+"""',
-				"""+str(self.partner_id.id)+""",
-				"""+str(company_id)+""",
-				"""+str("%.2f"%debit)+""",
-				'"""+str(doc_ref.comprobante)+"""',
-				"""+str(asiento_id.id)+""",
-				"""+str("%.2f"%debit)+""",
-				"""+str(False)+""",
-				"""+str("%.2f"%debit)+""",
-				'"""+str(self.date_invoice)+"""',
-				"""+str(self.move_id.id)+""",
-				"""+str(self.env.user.company_id.currency_id.id)+""",
-				'Nota de Credito: """+str(self.reference)+"""',
-				"""+str(self.id)+""",
-				"""+str("%.2f"%amount_residual)+""",1,
-				"""+str(doc_ref.tipo_doc.id)+""",
-				'"""+str(doc_ref.comprobante)+"""',
-				'"""+str(datetime.today())+"""',
-				"""+str(False)+""",
-				"""+str(self.env.user.id)+""",
-				"""+str(0)+""",
-				"""+str(0)+""",
-				'"""+str(datetime.today())+"""',
-				"""+str(self.env.user.id)+""",
-				"""+str("%.2f"%credit)+""",
-				"""+str(0)+""",
-				"""+str(10)+""",
-				"""+str("%.2f"%amount_residual)+"""
+				values = (
+					(
+						(
+							(
+								(
+									(
+										(
+											(
+												(
+													(
+														(
+															(
+																(
+																	(
+																		(
+																			(
+																				(
+																					(
+																						(
+																							(
+																								(
+																									(
+																										(
+																											(
+																												(
+																													(
+																														(
+																															(
+																																(
+																																	f"""VALUES({str(self.journal_id.id)}"""
+																																	+ """,
+				'"""
+																																)
+																																+ str(
+																																	self.date_due
+																																)
+																																+ """',
+				"""
+																															)
+																															+ str(
+																																self.partner_id.id
+																															)
+																															+ """,
+				"""
+																														)
+																														+ str(
+																															company_id
+																														)
+																														+ """,
+				"""
+																													)
+																													+ str(
+																														"%.2f"
+																														% debit
+																													)
+																													+ """,
+				'"""
+																												)
+																												+ str(
+																													doc_ref.comprobante
+																												)
+																												+ """',
+				"""
+																											)
+																											+ str(
+																												asiento_id.id
+																											)
+																											+ """,
+				"""
+																										)
+																										+ str(
+																											"%.2f"
+																											% debit
+																										)
+																										+ """,
+				"""
+																									)
+																									+ str(
+																										False
+																									)
+																									+ """,
+				"""
+																								)
+																								+ str(
+																									"%.2f"
+																									% debit
+																								)
+																								+ """,
+				'"""
+																							)
+																							+ str(
+																								self.date_invoice
+																							)
+																							+ """',
+				"""
+																						)
+																						+ str(
+																							self.move_id.id
+																						)
+																						+ """,
+				"""
+																					)
+																					+ str(
+																						self.env.user.company_id.currency_id.id
+																					)
+																					+ """,
+				'Nota de Credito: """
+																				)
+																				+ str(
+																					self.reference
+																				)
+																				+ """',
+				"""
+																			)
+																			+ str(self.id)
+																			+ """,
+				"""
+																		)
+																		+ str(
+																			"%.2f"
+																			% amount_residual
+																		)
+																		+ """,1,
+				"""
+																	)
+																	+ str(
+																		doc_ref.tipo_doc.id
+																	)
+																	+ """,
+				'"""
+																)
+																+ str(doc_ref.comprobante)
+																+ """',
+				'"""
+															)
+															+ str(datetime.now())
+															+ """',
+				"""
+														)
+														+ str(False)
+														+ """,
+				"""
+													)
+													+ str(self.env.user.id)
+													+ """,
+				"""
+												)
+												+ str(0)
+												+ """,
+				"""
+											)
+											+ str(0)
+											+ """,
+				'"""
+										)
+										+ str(datetime.now())
+										+ """',
+				"""
+									)
+									+ str(self.env.user.id)
+									+ """,
+				"""
+								)
+								+ str("%.2f" % credit)
+								+ """,
+				"""
+							)
+							+ str(0)
+							+ """,
+				"""
+						)
+						+ str(10)
+						+ """,
+				"""
+					)
+					+ str("%.2f" % amount_residual)
+					+ """
 				)"""
-				self.env.cr.execute(insert + values)
+				)
 			else:
 
 
@@ -230,40 +389,212 @@ class account_invoice(models.Model):
 				insert ="""INSERT INTO account_move_line (journal_id,date_maturity, partner_id, company_id, debit,ref,
 	            account_id,debit_cash_basis,reconciled,balance_cash_basis,date,move_id,company_currency_id,name,invoice_id,balance,quantity,type_document_it,nro_comprobante,
 	            create_date,blocked,create_uid,credit_cash_basis,amount_residual_currency,write_date,write_uid,credit,amount_currency,sequence,amount_residual,currency_id,tc) """
-				values = """VALUES("""+str(self.journal_id.id)+""",
-				'"""+str(self.date_due)+"""',
-				"""+str(self.partner_id.id)+""",
-				"""+str(company_id)+""",
-				"""+str("%.2f"%(debit*self.currency_rate_auto))+""",
-				'"""+str(doc_ref.comprobante)+"""',
-				"""+str(asiento_id.id)+""",
-				"""+str("%.2f"%(debit*self.currency_rate_auto))+""",
-				"""+str(False)+""",
-				"""+str("%.2f"%(debit*self.currency_rate_auto))+""",
-				'"""+str(self.date_invoice)+"""',
-				"""+str(self.move_id.id)+""",
-				"""+str(self.env.user.company_id.currency_id.id)+""",
-				'Nota de Credito: """+str(self.reference)+"""',
-				"""+str(self.id)+""",
-				"""+str("%.2f"%(amount_residual*self.currency_rate_auto))+""",1,
-				"""+str(doc_ref.tipo_doc.id)+""",
-				'"""+str(doc_ref.comprobante)+"""',
-				'"""+str(datetime.today())+"""',
-				"""+str(False)+""",
-				"""+str(self.env.user.id)+""",
-				"""+str(0)+""",
-				"""+str("%.2f"%(amount_residual))+""",
-				'"""+str(datetime.today())+"""',
-				"""+str(self.env.user.id)+""",
-				"""+str("%.2f"%(credit*self.currency_rate_auto))+""",
-				"""+str("%.2f"%(debit-credit))+""",
-				"""+str(10)+""",
-				"""+str("%.2f"%(amount_residual*self.currency_rate_auto))+""",
-				"""+str(self.currency_id.id)+""",
-				"""+str(self.currency_rate_auto)+"""
+				values = (
+					(
+						(
+							(
+								(
+									(
+										(
+											(
+												(
+													(
+														(
+															(
+																(
+																	(
+																		(
+																			(
+																				(
+																					(
+																						(
+																							(
+																								(
+																									(
+																										(
+																											(
+																												(
+																													(
+																														(
+																															(
+																																(
+																																	(
+																																		(
+																																			f"""VALUES({str(self.journal_id.id)}"""
+																																			+ """,
+				'"""
+																																		)
+																																		+ str(
+																																			self.date_due
+																																		)
+																																		+ """',
+				"""
+																																	)
+																																	+ str(
+																																		self.partner_id.id
+																																	)
+																																	+ """,
+				"""
+																																)
+																																+ str(
+																																	company_id
+																																)
+																																+ """,
+				"""
+																															)
+																															+ str(
+																																"%.2f"
+																																% (
+																																	debit
+																																	* self.currency_rate_auto
+																																)
+																															)
+																															+ """,
+				'"""
+																														)
+																														+ str(
+																															doc_ref.comprobante
+																														)
+																														+ """',
+				"""
+																													)
+																													+ str(
+																														asiento_id.id
+																													)
+																													+ """,
+				"""
+																												)
+																												+ str(
+																													"%.2f"
+																													% (
+																														debit
+																														* self.currency_rate_auto
+																													)
+																												)
+																												+ """,
+				"""
+																											)
+																											+ str(
+																												False
+																											)
+																											+ """,
+				"""
+																										)
+																										+ str(
+																											"%.2f"
+																											% (
+																												debit
+																												* self.currency_rate_auto
+																											)
+																										)
+																										+ """,
+				'"""
+																									)
+																									+ str(
+																										self.date_invoice
+																									)
+																									+ """',
+				"""
+																								)
+																								+ str(
+																									self.move_id.id
+																								)
+																								+ """,
+				"""
+																							)
+																							+ str(
+																								self.env.user.company_id.currency_id.id
+																							)
+																							+ """,
+				'Nota de Credito: """
+																						)
+																						+ str(
+																							self.reference
+																						)
+																						+ """',
+				"""
+																					)
+																					+ str(
+																						self.id
+																					)
+																					+ """,
+				"""
+																				)
+																				+ str(
+																					"%.2f"
+																					% (
+																						amount_residual
+																						* self.currency_rate_auto
+																					)
+																				)
+																				+ """,1,
+				"""
+																			)
+																			+ str(
+																				doc_ref.tipo_doc.id
+																			)
+																			+ """,
+				'"""
+																		)
+																		+ str(
+																			doc_ref.comprobante
+																		)
+																		+ """',
+				'"""
+																	)
+																	+ str(datetime.now())
+																	+ """',
+				"""
+																)
+																+ str(False)
+																+ """,
+				"""
+															)
+															+ str(self.env.user.id)
+															+ """,
+				"""
+														)
+														+ str(0)
+														+ """,
+				"""
+													)
+													+ str("%.2f" % (amount_residual))
+													+ """,
+				'"""
+												)
+												+ str(datetime.now())
+												+ """',
+				"""
+											)
+											+ str(self.env.user.id)
+											+ """,
+				"""
+										)
+										+ str("%.2f" % (credit * self.currency_rate_auto))
+										+ """,
+				"""
+									)
+									+ str("%.2f" % (debit - credit))
+									+ """,
+				"""
+								)
+								+ str(10)
+								+ """,
+				"""
+							)
+							+ str("%.2f" % (amount_residual * self.currency_rate_auto))
+							+ """,
+				"""
+						)
+						+ str(self.currency_id.id)
+						+ """,
+				"""
+					)
+					+ str(self.currency_rate_auto)
+					+ """
 				)"""
-				self.env.cr.execute(insert + values)
-
+				)
+			self.env.cr.execute(insert + values)
 		self.env.cr.execute("""
 
 			select sum(aml.debit-aml.credit) as saldo, am.id 

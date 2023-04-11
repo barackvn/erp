@@ -52,31 +52,57 @@ class account_analisis_meses_wizard(models.Model):
 	@api.multi
 	def do_rebuild(self):
 		#fiscal_year = self.fiscalyear_id.name
-		ft = self.env['account.period'].search([('code','=','00/'+ self.fiscalyear_id.name)])
+		ft = self.env['account.period'].search(
+			[('code', '=', f'00/{self.fiscalyear_id.name}')]
+		)
 		f0 = ft if len(ft)>0 else '0'
-		ft = self.env['account.period'].search([('code','=','01/'+ self.fiscalyear_id.name)])
+		ft = self.env['account.period'].search(
+			[('code', '=', f'01/{self.fiscalyear_id.name}')]
+		)
 		f1 = ft if len(ft)>0 else '0'
-		ft = self.env['account.period'].search([('code','=','02/'+ self.fiscalyear_id.name)])
+		ft = self.env['account.period'].search(
+			[('code', '=', f'02/{self.fiscalyear_id.name}')]
+		)
 		f2 = ft if len(ft)>0 else '0'
-		ft = self.env['account.period'].search([('code','=','03/'+ self.fiscalyear_id.name)])
+		ft = self.env['account.period'].search(
+			[('code', '=', f'03/{self.fiscalyear_id.name}')]
+		)
 		f3 =  ft if len(ft)>0 else '0'
-		ft = self.env['account.period'].search([('code','=','04/'+ self.fiscalyear_id.name)])
+		ft = self.env['account.period'].search(
+			[('code', '=', f'04/{self.fiscalyear_id.name}')]
+		)
 		f4 =  ft if len(ft)>0 else '0'
-		ft = self.env['account.period'].search([('code','=','05/'+ self.fiscalyear_id.name)])
+		ft = self.env['account.period'].search(
+			[('code', '=', f'05/{self.fiscalyear_id.name}')]
+		)
 		f5 =  ft if len(ft)>0 else '0'
-		ft = self.env['account.period'].search([('code','=','06/'+ self.fiscalyear_id.name)])
+		ft = self.env['account.period'].search(
+			[('code', '=', f'06/{self.fiscalyear_id.name}')]
+		)
 		f6 =  ft if len(ft)>0 else '0'
-		ft = self.env['account.period'].search([('code','=','07/'+ self.fiscalyear_id.name)])
+		ft = self.env['account.period'].search(
+			[('code', '=', f'07/{self.fiscalyear_id.name}')]
+		)
 		f7 =  ft if len(ft)>0 else '0'
-		ft = self.env['account.period'].search([('code','=','08/'+ self.fiscalyear_id.name)])
+		ft = self.env['account.period'].search(
+			[('code', '=', f'08/{self.fiscalyear_id.name}')]
+		)
 		f8 =  ft if len(ft)>0 else '0'
-		ft = self.env['account.period'].search([('code','=','09/'+ self.fiscalyear_id.name)])
+		ft = self.env['account.period'].search(
+			[('code', '=', f'09/{self.fiscalyear_id.name}')]
+		)
 		f9 =  ft if len(ft)>0 else '0'
-		ft = self.env['account.period'].search([('code','=','10/'+ self.fiscalyear_id.name)])
+		ft = self.env['account.period'].search(
+			[('code', '=', f'10/{self.fiscalyear_id.name}')]
+		)
 		f10 =  ft if len(ft)>0 else '0'
-		ft = self.env['account.period'].search([('code','=','11/'+ self.fiscalyear_id.name)])
+		ft = self.env['account.period'].search(
+			[('code', '=', f'11/{self.fiscalyear_id.name}')]
+		)
 		f11 =  ft if len(ft)>0 else '0'
-		ft = self.env['account.period'].search([('code','=','12/'+ self.fiscalyear_id.name)])
+		ft = self.env['account.period'].search(
+			[('code', '=', f'12/{self.fiscalyear_id.name}')]
+		)
 		f12 =  ft if len(ft)>0 else '0'
 
 

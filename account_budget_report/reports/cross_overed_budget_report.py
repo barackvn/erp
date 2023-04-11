@@ -183,15 +183,13 @@ class BudgetReport(report_sxw.rml_parse):
         return result
 
     def funct_total(self, form):
-        result = []
         res = {
              'tot_theo': tot['theo'],
              'tot_pln': tot['pln'],
              'tot_prac': tot['prac'],
              'tot_perc': tot['perc']
         }
-        result.append(res)
-        return result
+        return [res]
 
 
 class ReportCrossOverBudget(osv.AbstractModel):

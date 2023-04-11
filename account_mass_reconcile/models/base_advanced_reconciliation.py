@@ -129,24 +129,17 @@ class MassReconcileAdvanced(models.AbstractModel):
         # consider that empty vals are not valid matchers
         # it can still be inherited for some special cases
         # where it would be allowed
-        if not (value and opposite_value):
-            return False
-
-        if value == opposite_value:
-            return True
-        return False
+        return False if not value or not opposite_value else value == opposite_value
 
     @staticmethod
     def _compare_matcher_values(key, values, opposite_values):
         """ Compare every values from a matcher vs an opposite matcher
         and return True if it matches
         """
-        for value, ovalue in product(values, opposite_values):
-            # we do not need to compare all values, if one matches
-            # we are done
-            if MassReconcileAdvanced._compare_values(key, value, ovalue):
-                return True
-        return False
+        return any(
+            MassReconcileAdvanced._compare_values(key, value, ovalue)
+            for value, ovalue in product(values, opposite_values)
+        )
 
     @staticmethod
     def _compare_matchers(matcher, opposite_matcher):
@@ -180,7 +173,7 @@ class MassReconcileAdvanced(models.AbstractModel):
             except StopIteration:
                 # if you fall here, you probably missed to put a `yield`
                 # in `_opposite_matchers()`
-                raise ValueError("Missing _opposite_matcher: %s" % matcher[0])
+                raise ValueError(f"Missing _opposite_matcher: {matcher[0]}")
 
             if not self._compare_matchers(matcher, opp_matcher):
                 # if any of the matcher fails, the opposite line
@@ -207,8 +200,7 @@ class MassReconcileAdvanced(models.AbstractModel):
     def _action_rec(self):
         credit_lines = self._query_credit()
         debit_lines = self._query_debit()
-        result = self._rec_auto_lines_advanced(credit_lines, debit_lines)
-        return result
+        return self._rec_auto_lines_advanced(credit_lines, debit_lines)
 
     @api.multi
     def _skip_line(self, move_line):
@@ -243,7 +235,7 @@ class MassReconcileAdvanced(models.AbstractModel):
                 opposite_ids = [l['id'] for l in opposite_lines]
                 line_ids = opposite_ids + [credit_line['id']]
                 for group in reconcile_groups:
-                    if any([lid in group for lid in opposite_ids]):
+                    if any(lid in group for lid in opposite_ids):
                         _logger.debug("New lines %s matched with an existing "
                                       "group %s", line_ids, group)
                         group.update(line_ids)
@@ -256,7 +248,7 @@ class MassReconcileAdvanced(models.AbstractModel):
             _logger.info("Found %d groups to reconcile",
                          len(reconcile_groups))
             for group_count, reconcile_group_ids \
-                    in enumerate(reconcile_groups, start=1):
+                        in enumerate(reconcile_groups, start=1):
                 _logger.debug("Reconciling group %d/%d with ids %s",
                               group_count, len(reconcile_groups),
                               reconcile_group_ids)

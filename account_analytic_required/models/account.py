@@ -37,8 +37,7 @@ class AccountMove(models.Model):
     def post(self):
         res = super(AccountMove, self).post()
         for i in self.line_ids:
-            msg = i._check_analytic_required_msg()
-            if msg:
+            if msg := i._check_analytic_required_msg():
                 raise exceptions.ValidationError(msg)
         return res
 
@@ -157,9 +156,7 @@ class analytic_view_error_wizard(models.Model):
                 and
                 periodo_num(ap.code) <= periodo_num('"""+str(self.period_fin.code)+"""')
             """)
-        for i in self.env.cr.fetchall():
-            ids_f.append(i[0])
-
+        ids_f.extend(i[0] for i in self.env.cr.fetchall())
         return {
                 'domain' : [('period_id','in',ids_f)],
                 'type': 'ir.actions.act_window',

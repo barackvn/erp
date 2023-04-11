@@ -44,7 +44,7 @@ class account_invoice(models.Model):
 		tipo = None
 		for i in self.advance_payment_ids:
 			tipo = i.td.id
-			compro = i.serial + '-' + i.number
+			compro = f'{i.serial}-{i.number}'
 
 		if not compro or not tipo:
 			raise UserError('No hay anticipo para aplicar.')

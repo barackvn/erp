@@ -97,13 +97,14 @@ class TestScenarioReconcile(common.TransactionCase):
             }
         )
 
-        # reconcile
-        line_id = None
-        for l in invoice.move_id.line_ids:
-            if l.account_id.id == self.ref('account.a_recv'):
-                line_id = l
-                break
-
+        line_id = next(
+            (
+                l
+                for l in invoice.move_id.line_ids
+                if l.account_id.id == self.ref('account.a_recv')
+            ),
+            None,
+        )
         for statement_line in statement.line_ids:
             statement_line.process_reconciliation(
                 [
@@ -145,11 +146,13 @@ class TestScenarioReconcile(common.TransactionCase):
 
     def test_scenario_reconcile_currency(self):
         # create currency rate
-        self.env['res.currency.rate'].create({
-            'name': fields.Date.today() + ' 00:00:00',
-            'currency_id': self.ref('base.USD'),
-            'rate': 1.5,
-        })
+        self.env['res.currency.rate'].create(
+            {
+                'name': f'{fields.Date.today()} 00:00:00',
+                'currency_id': self.ref('base.USD'),
+                'rate': 1.5,
+            }
+        )
         # create invoice
         invoice = self.invoice_obj.create(
             {
@@ -196,13 +199,14 @@ class TestScenarioReconcile(common.TransactionCase):
             }
         )
 
-        # reconcile
-        line_id = None
-        for l in invoice.move_id.line_ids:
-            if l.account_id.id == self.ref('account.a_recv'):
-                line_id = l
-                break
-
+        line_id = next(
+            (
+                l
+                for l in invoice.move_id.line_ids
+                if l.account_id.id == self.ref('account.a_recv')
+            ),
+            None,
+        )
         for statement_line in statement.line_ids:
             statement_line.process_reconciliation(
                 [

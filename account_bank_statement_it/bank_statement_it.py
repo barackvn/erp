@@ -39,7 +39,7 @@ class account_bank_statement_import_it(models.Model):
 					if detalle[4]== '':
 						raise UserError( 'Medio de Pago es obligatorio y una linea no contiene información' )
 					else:
-						raise UserError( 'No existe el Medio de Pago: ' + detalle[4] )
+						raise UserError(f'No existe el Medio de Pago: {detalle[4]}')
 
 				self.env['account.bank.statement.line'].create(datos)
 
@@ -57,8 +57,7 @@ class account_bank_statement(models.Model):
 		if len(self.line_ids)>0:
 			raise UserError('No se puede eliminar una asientos generados.')
 
-		t = super(account_bank_statement,self).unlink()
-		return t
+		return super(account_bank_statement,self).unlink()
 
 	@api.multi
 	def importar_lineas(self):
@@ -74,7 +73,7 @@ class account_bank_statement(models.Model):
 	def name_get(self):
 		result = []
 		for table in self:
-			l_name =  table.name if table.name else '/'
+			l_name = table.name or '/'
 			result.append((table.id, l_name ))
 		return result
 

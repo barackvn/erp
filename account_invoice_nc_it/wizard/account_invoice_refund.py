@@ -15,12 +15,9 @@ class AccountInvoiceRefund(models.TransientModel):
     @api.one
     @api.depends('filter_refund')
     def get_serie_visible(self):
-        t = False
         g = self.env.context.get('active_ids',[])
         facturas = self.env['account.invoice'].browse(g)
-        if len(facturas)>0:
-            if facturas[0].type == 'out_invoice':
-                t = True
+        t = len(facturas)>0 and facturas[0].type == 'out_invoice'
         self.serie_visible = t
 
 
@@ -32,13 +29,13 @@ class AccountInvoiceRefund(models.TransientModel):
             self.nro_comprobante = str(self.nro_comprobante).replace(' ', '')
 
             if self.nro_comprobante and tipo_doc.id:
-                self.nro_comprobante = str(self.nro_comprobante).replace(' ', '')
+                self.nro_comprobante = self.nro_comprobante.replace(' ', '')
                 t = self.nro_comprobante.split('-')
                 n_serie = 0
                 n_documento = 0
                 self.env.cr.execute(
-                    "select coalesce(n_serie,0), coalesce(n_documento,0) from einvoice_catalog_01 where id = " + str(
-                        tipo_doc.id))
+                    f"select coalesce(n_serie,0), coalesce(n_documento,0) from einvoice_catalog_01 where id = {str(tipo_doc.id)}"
+                )
 
                 forelemn = self.env.cr.fetchall()
                 for ielem in forelemn:
@@ -46,22 +43,20 @@ class AccountInvoiceRefund(models.TransientModel):
                     n_documento = ielem[1]
                 if len(t) == 2:
                     parte1 = t[0]
-                    if len(t[0]) < n_serie:
-                        for i in range(0, n_serie - len(t[0])):
-                            parte1 = '0' + parte1
+                    if len(parte1) < n_serie:
+                        for _ in range(n_serie - len(parte1)):
+                            parte1 = f'0{parte1}'
                     parte2 = t[1]
-                    if len(t[1]) < n_documento:
-                        for i in range(0, n_documento - len(t[1])):
-                            parte2 = '0' + parte2
-                    self.nro_comprobante = parte1 + '-' + parte2
+                    if len(parte2) < n_documento:
+                        for _ in range(n_documento - len(parte2)):
+                            parte2 = f'0{parte2}'
+                    self.nro_comprobante = f'{parte1}-{parte2}'
                 elif len(t) == 1:
                     parte2 = t[0]
-                    if len(t[0]) < n_documento:
-                        for i in range(0, n_documento - len(t[0])):
-                            parte2 = '0' + parte2
+                    if len(parte2) < n_documento:
+                        for _ in range(n_documento - len(parte2)):
+                            parte2 = f'0{parte2}'
                     self.nro_comprobante = parte2
-                else:
-                    pass
 
     @api.multi
     def compute_refund(self, mode='refund'):
@@ -150,13 +145,13 @@ class AccountInvoiceRefund(models.TransientModel):
                             inv_refund._onchange_payment_term_date_invoice()
                         created_inv.append(inv_refund.id)
                 xml_id = (inv.type in ['out_refund', 'out_invoice']) and 'action_invoice_tree1' or \
-                         (inv.type in ['in_refund', 'in_invoice']) and 'action_invoice_tree2'
+                             (inv.type in ['in_refund', 'in_invoice']) and 'action_invoice_tree2'
                 # Put the reason in the chatter
                 subject = _("Invoice refund")
                 body = description
                 refund.message_post(body=body, subject=subject)
         if xml_id:
-            result = self.env.ref('account.%s' % (xml_id)).read()[0]
+            result = self.env.ref(f'account.{xml_id}').read()[0]
             invoice_domain = safe_eval(result['domain'])
             invoice_domain.append(('id', 'in', created_inv))
             result['domain'] = invoice_domain

@@ -23,10 +23,11 @@ class AccountLeasing(models.Model):
     @api.depends('leasing_line','fecha_calculo')
     def calcular_deuda(self):
         hoy = datetime.strptime(self.fecha_calculo,"%Y-%m-%d")
-        resta = 0
-        for i in self.leasing_line:
-            if datetime.strptime(i.fecha,"%Y-%m-%d") <= hoy:
-                resta += i.total
+        resta = sum(
+            i.total
+            for i in self.leasing_line
+            if datetime.strptime(i.fecha, "%Y-%m-%d") <= hoy
+        )
         self.saldo = self.total_arrendamiento - resta
 
     nro_cuotas = fields.Integer('Nro. Cuotas',compute='calcular_cuotas')
@@ -41,18 +42,16 @@ class AccountLeasing(models.Model):
 
     @api.onchange('activo_category_id')
     def onchange_activo(self):
-        res = {}
         activos_ids = self.env['account.asset.asset'].search([('category_id','=',self.activo_category_id.id)]).ids
-        res['domain'] = {'activo_id':[('id','in',activos_ids)]}
-        return res
+        return {'domain': {'activo_id': [('id','in',activos_ids)]}}
 
     @api.model
     def create(self,vals):
-        activo = self.env['account.leasing'].search([('activo_id','=',vals['activo_id'])])
-        if activo:
+        if activo := self.env['account.leasing'].search(
+            [('activo_id', '=', vals['activo_id'])]
+        ):
             raise UserError('No se puede crear dos registros con el mismo activo')
-        t = super(AccountLeasing,self).create(vals)
-        return t
+        return super(AccountLeasing,self).create(vals)
 
     @api.one
     def validate(self):
@@ -82,7 +81,9 @@ class AccountLeasing(models.Model):
             if i.invoice_1 == False and i.invoice_2 == False and i.move == False:
                 self.env['account.leasing.line'].browse(i.id).unlink()
             else:
-                raise UserError("La cuota Nro. "+str(i.nro_cuota)+" tiene Asientos Contables y Facturas relacionadas para eliminarlo primero debe eliminar dichos registros")
+                raise UserError(
+                    f"La cuota Nro. {str(i.nro_cuota)} tiene Asientos Contables y Facturas relacionadas para eliminarlo primero debe eliminar dichos registros"
+                )
         return {
                     'res_id':self.id,
                     'view_type':'form',
@@ -138,19 +139,22 @@ class AccountLeasingLine(models.Model):
 
     @api.multi
     def delete_leasing_line(self):
-        if self.invoice_1 == False and self.invoice_2 == False and self.move == False:
-            leasing = self.leasing_id.id
-            self.env['account.leasing.line'].browse(self.id).unlink()
-            return {
-                'res_id':leasing,
-                'view_type':'form',
-                'view_mode':'form',
-                'res_model':'account.leasing',
-                'views':[[self.env.ref('account_leasing_it.account_leasing_form_view').id,'form']],
-                'type':'ir.actions.act_window',
-            }
-        else:
+        if (
+            self.invoice_1 != False
+            or self.invoice_2 != False
+            or self.move != False
+        ):
             raise UserError("Esta cuota tiene Asientos Contables y Facturas relacionadas para eliminarlo primero debe eliminar dichos registros")
+        leasing = self.leasing_id.id
+        self.env['account.leasing.line'].browse(self.id).unlink()
+        return {
+            'res_id':leasing,
+            'view_type':'form',
+            'view_mode':'form',
+            'res_model':'account.leasing',
+            'views':[[self.env.ref('account_leasing_it.account_leasing_form_view').id,'form']],
+            'type':'ir.actions.act_window',
+        }
 
 class FacturaLine(models.Model):
     _name = 'factura.line'

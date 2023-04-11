@@ -70,42 +70,49 @@ class account_account_analytic_asiento_wizard(osv.TransientModel):
 		if (len(lst_journals) == 0) :
 			raise osv.except_osv('Alerta','No tiene configurado el Diario para el Asiento Unico.')
 		move_obj=self.env['account.account.analytic.rep.contable.unico']
-		
+
 		mlra_obj = move_obj.search([('period','=',fecha_obj.id)])
 		if (len(mlra_obj) == 0):
 			raise osv.except_osv('Alerta','No contiene datos o no esta configurado sus cuentas de amarre.')
-		
+
 		periodo = fecha_obj
 		lineas = []
 		for mlra in mlra_obj:
 			debit = round(mlra.debe,2)
 			credit = round(mlra.haber,2)
-			vals = (0,0,{
-				'analytic_account_id': False, 
-				'tax_code_id': False, 
-				'analytic_lines': [], 
-				'tax_amount': 0.0, 
-				'name': "%s"%('Asiento de Destino Clase 9 para '+periodo.name), 
-				'ref': 'Asiento de Destino Clase 9 para '+periodo.name, 
-				'debit': debit,
-				'credit': credit, 
-				'product_id': False, 
-				'date_maturity': False, 
-				'date': fechaD,
-				'product_uom_id': False, 
-				'quantity': 0, 
-				'partner_id': False, 
-				'account_id': int(mlra.cuenta),
-				'analytic_line_id': False,
-				'nro_comprobante': 'DEST-'+periodo.name,
-			})
+			vals = (
+				0,
+				0,
+				{
+					'analytic_account_id': False,
+					'tax_code_id': False,
+					'analytic_lines': [],
+					'tax_amount': 0.0,
+					'name': f"Asiento de Destino Clase 9 para {periodo.name}",
+					'ref': f'Asiento de Destino Clase 9 para {periodo.name}',
+					'debit': debit,
+					'credit': credit,
+					'product_id': False,
+					'date_maturity': False,
+					'date': fechaD,
+					'product_uom_id': False,
+					'quantity': 0,
+					'partner_id': False,
+					'account_id': int(mlra.cuenta),
+					'analytic_line_id': False,
+					'nro_comprobante': f'DEST-{periodo.name}',
+				},
+			)
 			lineas.append(vals)
-			
-		move_id = self.env['account.move'].create({
-			'company_id': periodo.company_id.id,
-			'journal_id': lst_journals.id,
-			'period_id': periodo.id,
-			'date': fechaD,
-			'ref': 'DEST-'+periodo.name, 
-			'line_id':lineas})			
+
+		move_id = self.env['account.move'].create(
+			{
+				'company_id': periodo.company_id.id,
+				'journal_id': lst_journals.id,
+				'period_id': periodo.id,
+				'date': fechaD,
+				'ref': f'DEST-{periodo.name}',
+				'line_id': lineas,
+			}
+		)
 		return True

@@ -74,14 +74,15 @@ def number_to_letter(number):
 			output = CENTENAS[int(n[0]) - 1]
 
 		k = int(n[1:])
-		if(k <= 20):
+		if (k <= 20):
 			output += UNIDADES[k]
 		else:
-			if((k > 30) & (n[2] != '0')):
-				output += '%sY %s' % (DECENAS[int(n[1]) - 2], UNIDADES[int(n[2])])
+			if ((k > 30) & (n[2] != '0')):
+				output += f'{DECENAS[int(n[1]) - 2]}Y {UNIDADES[int(n[2])]}'
 			else:
-				output += '%s%s' % (DECENAS[int(n[1]) - 2], UNIDADES[int(n[2])])
+				output += f'{DECENAS[int(n[1]) - 2]}{UNIDADES[int(n[2])]}'
 		return output
+
 	#raise osv.except_osv('Alerta', number)
 	number=str(round(float(number),2))
 	separate = number.split(".")
@@ -92,36 +93,36 @@ def number_to_letter(number):
 
 	"""Converts a number into string representation"""
 	converted = ''
-	
+
 	if not (0 <= number < 999999999):
 		raise osv.except_osv('Alerta', number)
 		#return 'No es posible convertir el numero a letras'
 
-	
-	
+
+
 	number_str = str(number).zfill(9)
 	millones = number_str[:3]
 	miles = number_str[3:6]
 	cientos = number_str[6:]
-	
 
-	if(millones):
-		if(millones == '001'):
+
+	if millones:
+		if (millones == '001'):
 			converted += 'UN MILLON '
-		elif(int(millones) > 0):
-			converted += '%sMILLONES ' % __convert_group(millones)
+		elif (int(millones) > 0):
+			converted += f'{__convert_group(millones)}MILLONES '
 
-	if(miles):
-		if(miles == '001'):
+	if miles:
+		if (miles == '001'):
 			converted += 'MIL '
-		elif(int(miles) > 0):
-			converted += '%sMIL ' % __convert_group(miles)
+		elif (int(miles) > 0):
+			converted += f'{__convert_group(miles)}MIL '
 
-	if(cientos):
-		if(cientos == '001'):
+	if cientos:
+		if (cientos == '001'):
 			converted += 'UN '
-		elif(int(cientos) > 0):
-			converted += '%s ' % __convert_group(cientos)
+		elif (int(cientos) > 0):
+			converted += f'{__convert_group(cientos)} '
 	if float(number_str)==0:
 		converted += 'CERO '
 	converted += moneda
@@ -155,12 +156,12 @@ class account_bank_report(models.Model):
 
 	@api.one
 	def compute_documento(self):
-		array_payments = []
-		for pagos in self.nro_asiento.line_ids:
-			if pagos.payment_id.id:
-				array_payments.append(pagos.payment_id)
-
-		if len(array_payments) == 0:
+		array_payments = [
+			pagos.payment_id
+			for pagos in self.nro_asiento.line_ids
+			if pagos.payment_id.id
+		]
+		if not array_payments:
 			self.documento = False
 		elif len(array_payments) >1:
 			self.documento = 'Varios'
@@ -307,17 +308,16 @@ class impresion_cheques(models.Model):
 				txt = config_print.texto
 				fecha_parse = linea.fecha.split('-')
 				fecha_dia = None
-				fecha_mes = None 
+				fecha_mes = None
 				fecha_anio = None
 				if len(fecha_parse[0]) == 4:
 					fecha_anio = fecha_parse[0]
-					fecha_mes = fecha_parse[1]
 					fecha_dia = fecha_parse[2]
 				else:
 					fecha_anio = fecha_parse[2]
-					fecha_mes = fecha_parse[1]
 					fecha_dia = fecha_parse[0]
 
+				fecha_mes = fecha_parse[1]
 				txt = txt.replace('(A11)', str(fecha_dia) )
 				txt = txt.replace('(A12)', str(fecha_mes) )
 				txt = txt.replace('(A13)', str(fecha_anio) )
@@ -327,14 +327,27 @@ class impresion_cheques(models.Model):
 				txt = txt.replace('(A4)', number_to_letter(linea.cargo_mn + linea.abono_mn) )
 
 			else:
-				txt = txt+chr(27)+chr(15)+chr(27)+chr(48)			
+				txt = txt+chr(27)+chr(15)+chr(27)+chr(48)
 				txt = txt+"\n"
-				txt = txt+"                    "+ linea.fecha + "                " + str( re.sub("(\d)(?=(\d{3})+(?!\d))", r"\1,", "%.2f" % (linea.cargo_mn- linea.abono_mn) ) )+"\n"
+				txt = (
+					f"{txt}                    {linea.fecha}                "
+					+ str(
+						re.sub(
+							"(\d)(?=(\d{3})+(?!\d))",
+							r"\1,",
+							"%.2f" % (linea.cargo_mn - linea.abono_mn),
+						)
+					)
+					+ "\n"
+				)
 				txt = txt+"\n"
-				txt = txt+"\n"			
 				txt = txt+"\n"
-				txt = txt+"     "+ str(linea.nombre) + "\n"
-				txt = txt+"     "+ "SON: "+ number_to_letter(linea.cargo_mn + linea.abono_mn) + " *******************" +"\n"
+				txt = txt+"\n"
+				txt = f"{txt}     {str(linea.nombre)}" + "\n"
+				txt = (
+					f"{txt}     SON: {number_to_letter(linea.cargo_mn + linea.abono_mn)} *******************"
+					+ "\n"
+				)
 				txt = txt+chr(12)+chr(27)
 
 			self.env['make.txt'].makefile(txt,'chk')

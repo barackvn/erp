@@ -217,7 +217,7 @@ class AbstractReportXslx(ReportXlsx):
 
         Columns are defined with `_get_report_columns` method.
         """
-        for i in range(0, len(self.columns)):
+        for i in range(len(self.columns)):
             self.sheet.write(self.row_pos, i, '', self.format_header_right)
         row_count_name = self._get_col_count_final_balance_name()
         col_pos_label = self._get_col_pos_final_balance_label()
